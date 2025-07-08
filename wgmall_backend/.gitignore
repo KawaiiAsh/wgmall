@@ -1,0 +1,48 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Spring Boot specific
+target/
+*.jar
+*.war
+*.ear
+*.db
+
+# Log files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven
+/.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle
+.gradle/
+build/
+
+# Eclipse files
+.project
+.classpath
+.settings/
+
+# Temporary files
+*.swp
+*~.nib
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# Java specific
+*.class
+*.log
+
+# Dependencies
+/node_modules/
