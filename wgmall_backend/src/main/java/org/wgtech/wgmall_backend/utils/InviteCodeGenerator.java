@@ -1,6 +1,7 @@
 package org.wgtech.wgmall_backend.utils;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.wgtech.wgmall_backend.repository.AdministratorRepository;
 import org.wgtech.wgmall_backend.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,8 @@ public class InviteCodeGenerator {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private AdministratorRepository userAdminRepository;
 
     // 定义字符集（大写字母、小写字母和数字）
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -42,6 +45,7 @@ public class InviteCodeGenerator {
 
     // 检查生成的邀请码是否已存在
     private boolean inviteCodeExists(String inviteCode) {
-        return userRepository.findByUsername(inviteCode).isPresent();
+        return userRepository.findByInviteCode(inviteCode).isPresent()
+                || userAdminRepository.findByInviteCode(inviteCode).isPresent();
     }
 }

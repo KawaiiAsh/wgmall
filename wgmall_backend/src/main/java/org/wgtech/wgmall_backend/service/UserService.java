@@ -6,7 +6,7 @@ import org.wgtech.wgmall_backend.utils.Result;
 public interface UserService {
 
     // 用户注册
-    Result<User> registerUser(String username, String phone, String password, String inviteCode, double fundPassword,String ip);
+    Result<User> registerUser(String username, String phone, String password, String inviteCode, String fundPassword,String ip);
 
     // 用户登录
     Result<User> loginUser(String username, String password);

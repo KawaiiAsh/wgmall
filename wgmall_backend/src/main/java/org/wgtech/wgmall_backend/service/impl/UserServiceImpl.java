@@ -12,6 +12,7 @@ import org.wgtech.wgmall_backend.utils.InviteCodeGenerator;
 import org.wgtech.wgmall_backend.utils.IpLocationDetector;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -32,7 +33,7 @@ public class UserServiceImpl implements UserService {
     // 用户注册
     @Override
     @Transactional
-    public Result<User> registerUser(String username, String phone, String password, String inviteCode, double fundPassword, String ip) {
+    public Result<User> registerUser(String username, String phone, String password, String inviteCode, String fundPassword, String ip) {
         try {
             // 1. 检查用户名是否已存在
             Optional<User> existingUserByUsername = userRepository.findByUsername(username);
@@ -47,18 +48,18 @@ public class UserServiceImpl implements UserService {
             }
 
 
-            // 3. 检测邀请码是否有效
-            String superior = null;  // 上级可以是 User 或 Administrator
+            // 3. 检测邀请码是否有效并查找上级昵称
+            String superiorUsername = null;
             if (inviteCode != null && !inviteCode.isEmpty()) {
-                // 检查邀请码是否是管理员（Administrator）
-                Optional<Administrator> superiorAdmin = administratorRepository.findByInviteCode(inviteCode);
-                if (superiorAdmin.isPresent()) {
-                    superior = superiorAdmin.get().getNickname();  // 上级为管理员的昵称
+                // 先查管理员
+                Optional<Administrator> adminOpt = administratorRepository.findByInviteCode(inviteCode);
+                if (adminOpt.isPresent()) {
+                    superiorUsername = adminOpt.get().getNickname();
                 } else {
-                    // 如果不是管理员，检查是否是用户（User）
-                    Optional<User> superiorUser = userRepository.findByInviteCode(inviteCode);
-                    if (superiorUser.isPresent()) {
-                        superior = superiorUser.get().getNickname();  // 上级为用户的昵称
+                    // 再查用户
+                    Optional<User> userOpt = userRepository.findByInviteCode(inviteCode);
+                    if (userOpt.isPresent()) {
+                        superiorUsername = userOpt.get().getUsername();
                     } else {
                         return Result.failure("无效的邀请码");
                     }
@@ -66,18 +67,28 @@ public class UserServiceImpl implements UserService {
             }
 
             // 4. 创建用户并保存
+
+            // 获取国家信息
+            String country = ipLocationDetector.getCountryByIp(ip);
+            // 检测IP是否重复
+            int repeatIp = userRepository.countByIp(ip) > 0 ? 1 : 0;
+
             User newUser = User.builder()
                     .username(username)
                     .nickname(username)
                     .phone(phone)
                     .password(password)
-                    .inviteCode("generatedInviteCode") // 这里你可以生成或设置邀请码
+                    .inviteCode(inviteCodeGenerator.generateUniqueInviteCode()) // 这里你可以生成或设置邀请码
                     .fundPassword(String.valueOf(fundPassword)) // 将资金密码存储为字符串
-                    .superior(superior)  // 上级为管理员
+                    .superiorUsername(superiorUsername)  // 上级可以是客户，也可以是管理员
                     .ip(ip)
                     .isBanned(false) // 默认不被封禁
                     .balance(0.0)  // 初始余额为 0
                     .toggle(false)
+                    .country(country)
+                    .registerTime(new Date())
+                    .lastLoginTime(new Date())
+                    .repeatIp(repeatIp)
                     .build();
 
             User savedUser = userRepository.save(newUser);
@@ -116,6 +127,10 @@ public class UserServiceImpl implements UserService {
             if (user.isBanned()) {
                 return Result.failure("用户已被封禁");
             }
+
+            // ✅ 更新上次登录时间
+            user.setLastLoginTime(new Date());
+            userRepository.save(user); // 保存更新后的时间
 
             return Result.success(user);
 
@@ -169,6 +184,4 @@ public class UserServiceImpl implements UserService {
         user.setLevel(level);
         return Result.success(user);
     }
-
-
 }

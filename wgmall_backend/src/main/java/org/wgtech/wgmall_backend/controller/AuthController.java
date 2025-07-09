@@ -7,7 +7,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.service.UserService;
+import org.wgtech.wgmall_backend.utils.JwtUtils;
 import org.wgtech.wgmall_backend.utils.Result;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -32,7 +36,7 @@ public class AuthController {
             @RequestParam String phone,
             @RequestParam String password,
             @RequestParam(required = false) String inviteCode,
-            @RequestParam Double fundPassword,
+            @RequestParam String fundPassword,
             @RequestParam String ip) {  // 接收IP地址参数
 
         // 调用服务层进行用户注册
@@ -54,7 +58,7 @@ public class AuthController {
      * @return 登录结果的提示
      */
     @PostMapping("/login")
-    public Result<User> login(
+    public Result<Map<String, Object>> login(
             @RequestParam String usernameOrPhone,
             @RequestParam String password) {
 
@@ -62,8 +66,16 @@ public class AuthController {
         Result<User> result = userService.loginUser(usernameOrPhone, password);
 
         if (result.getCode() == 200) {
-            // 登录成功，返回用户信息
-            return Result.success(result.getData());
+            // 登录成功，生成 JWT token
+            User user = result.getData();
+            String token = JwtUtils.generateToken(user.getUsername()); // 你已有 JwtUtils
+
+            // 返回 token 和用户信息
+            Map<String, Object> data = new HashMap<>();
+            data.put("token", token);
+            data.put("user", user); // 可返回基本用户信息
+
+            return Result.success(data);
         } else {
             // 登录失败，返回错误信息
             return Result.failure(result.getMessage());

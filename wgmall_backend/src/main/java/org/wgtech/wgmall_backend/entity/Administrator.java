@@ -13,7 +13,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Administrator {
+    public class Administrator {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // 自动生成ID
@@ -33,9 +33,6 @@ public class Administrator {
 
     @Column(nullable = true)
     private String inviteCode;  // 邀请码
-
-    @OneToMany(mappedBy = "superior")  // 一对多关系，一个管理员可以有多个下级客户
-    private List<User> subordinates;   // 下级客户列表
 
     @Column(nullable = false)
     private boolean isBanned;  // 是否被封禁 false是没被封号，true是封号

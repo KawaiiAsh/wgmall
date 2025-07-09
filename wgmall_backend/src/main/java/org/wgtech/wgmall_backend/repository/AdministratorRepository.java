@@ -13,4 +13,6 @@ public interface AdministratorRepository extends JpaRepository<Administrator, Lo
 
     // 根据邀请码查找业务员
     Optional<Administrator> findByInviteCode(String inviteCode); // 根据邀请码查找管理员
+
+
 }

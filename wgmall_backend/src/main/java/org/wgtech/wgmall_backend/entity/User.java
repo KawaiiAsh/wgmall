@@ -42,11 +42,8 @@ public class User {
     @NotNull(message = "邀请码不能为空")  // 非空校验
     private String inviteCode;        // 邀码
 
-    @JoinColumn(name = "superior_id")  // 外键指向 UserBase 表
-    private String superior;            // 上级（可以是 User 或 Administrator）
-
-    @OneToMany(mappedBy = "superior")  // 一对多关系，一个管理员可以有多个下级客户
-    private List<User> subordinates;   // 下级客户列表
+    // 用字符串存储上级昵称（可能是用户，也可能是管理员）
+    private String superiorUsername;
 
     @NotNull(message = "接单数量不能为空")  // 非空校验
     private int orderCount;           // 接单数量
