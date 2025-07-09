@@ -139,49 +139,42 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /**
-     * 加钱功能
-     * @param username
-     * @param amount
-     * @return
-     */
     @Override
-    public Result<User> addMoney(String username, double amount) {
-        // 查找用户
-        Optional<User> optionalUser = userRepository.findByUsername(username);
+    public Result<User> addMoney(Long userId, double amount) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            return Result.failure("用户ID不存在");
+        }
+
         User user = optionalUser.get();
         user.setBalance(user.getBalance() + amount);
-        return Result.success(user); // 使用 success 方法返回结果
+        userRepository.save(user);
+        return Result.success(user);
     }
 
-    /**
-     * 减钱功能
-     * @param username
-     * @param amount
-     * @return
-     */
     @Override
-    public Result<User> minusMoney(String username, double amount) {
-        // 查找用户
-        Optional<User> optionalUser = userRepository.findByUsername(username);
+    public Result<User> minusMoney(Long userId, double amount) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            return Result.failure("用户ID不存在");
+        }
+
         User user = optionalUser.get();
         user.setBalance(user.getBalance() - amount);
+        userRepository.save(user);
         return Result.success(user);
-
     }
 
-    /**
-     * 设置等级功能
-     * @param username
-     * @param level
-     * @return
-     */
     @Override
-    public Result<User> setLevel(String username, int level) {
-        // 查找用户
-        Optional<User> optionalUser = userRepository.findByUsername(username);
+    public Result<User> setLevel(Long userId, int level) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            return Result.failure("用户ID不存在");
+        }
+
         User user = optionalUser.get();
         user.setLevel(level);
+        userRepository.save(user);
         return Result.success(user);
     }
 }

@@ -46,7 +46,7 @@ public class User {
     private String superiorUsername;
 
     @NotNull(message = "接单数量不能为空")  // 非空校验
-    private int orderCount;           // 接单数量
+    private int orderCount;           // 可刷单数量
 
     private String remarks;           // 备注（可以为空）
 
@@ -77,6 +77,10 @@ public class User {
 
     @NotNull(message = "是否可以提款") // 默认是false，手动开启可以是true
     private boolean canWithdraw;
+
+    private boolean hasAssignedOrder;   // ✔️ 是否存在一个待领取的指派订单或者预约订单
+
+    private int reservedIndex;          // ✔️ 倒数第几单触发预约订单（类型3，可选）
 
     // 银行卡信息
     @Size(min = 1, max = 50, message = "银行卡名称长度在1到50个字符之间")

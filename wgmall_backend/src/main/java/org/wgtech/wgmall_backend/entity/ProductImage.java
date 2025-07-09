@@ -29,4 +29,5 @@ public class ProductImage {
     @JoinColumn(name = "product_id")
     @JsonBackReference // 这行解决循环引用
     private Product product;  // 所属商品
+
 }

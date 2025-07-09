@@ -1,28 +1,81 @@
 package org.wgtech.wgmall_backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.entity.Administrator;
+import org.wgtech.wgmall_backend.entity.User;
+import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.SalespersonCreator;
 import org.wgtech.wgmall_backend.utils.Result;
 
 @RestController
-@RequestMapping("/apply")
+@RequestMapping("/administrator")
+@Tag(name = "管理员相接口", description = "管理员可以用的相关功能")
 public class AdministratorController {
 
     @Autowired
     private SalespersonCreator salespersonCreator;
 
-    // 创建业务员的接口
+    @Autowired
+    private UserService userService;
+    /**
+     * 创建业务员账号
+     *
+     * @param username 用户名（唯一）
+     * @param nickname 昵称
+     * @param password 密码
+     * @return 创建结果
+     */
     @PostMapping("/createsales")
-    public Result createSalesperson(@RequestParam String username,
-                                    @RequestParam String nickname,
-                                    @RequestParam String password) {
+    @Operation(
+            summary = "创建业务员账号",
+            description = "管理员调用此接口可创建一个新的业务员账号，包含用户名、昵称和密码。"
+    )
+    public Result createSalesperson(
+            @Parameter(description = "用户名（唯一）", required = true)
+            @RequestParam String username,
+
+            @Parameter(description = "业务员昵称", required = true)
+            @RequestParam String nickname,
+
+            @Parameter(description = "登录密码", required = true)
+            @RequestParam String password
+    ) {
         try {
             Administrator admin = salespersonCreator.createSalesperson(username, nickname, password);
             return Result.success(admin);  // 创建成功，返回业务员信息
         } catch (Exception e) {
             return Result.failure("创建业务员失败：" + e.getMessage());
         }
+    }
+
+    @PostMapping("/add-money")
+    @Operation(summary = "给用户加钱", description = "根据用户ID增加余额")
+    public Result<User> addMoney(
+            @RequestParam Long userId,
+            @RequestParam double amount
+    ) {
+        return userService.addMoney(userId, amount);
+    }
+
+    @PostMapping("/minus-money")
+    @Operation(summary = "扣除用户余额", description = "根据用户ID扣除余额")
+    public Result<User> minusMoney(
+            @RequestParam Long userId,
+            @RequestParam double amount
+    ) {
+        return userService.minusMoney(userId, amount);
+    }
+
+    @PostMapping("/set-level")
+    @Operation(summary = "设置用户等级", description = "根据用户ID设置等级")
+    public Result<User> setLevel(
+            @RequestParam Long userId,
+            @RequestParam int level
+    ) {
+        return userService.setLevel(userId, level);
     }
 }

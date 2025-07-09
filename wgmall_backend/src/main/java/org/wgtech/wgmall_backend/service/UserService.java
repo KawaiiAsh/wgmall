@@ -11,12 +11,13 @@ public interface UserService {
     // 用户登录
     Result<User> loginUser(String username, String password);
 
-    // 根据用户名加钱
-    Result<User> addMoney(String username, double amount);
+    // 根据id加钱
+    Result<User> addMoney(Long userId, double amount);
 
-    // 根据用户名减钱
-    Result<User> minusMoney(String username, double amount);
+    // 根据id减钱
+    Result<User> minusMoney(Long userId, double amount);
 
-    // 根据用户名设置等级
-    Result<User> setLevel(String username, int level);
+    // 根据id设置等级
+    Result<User> setLevel(Long userId, int level);
+
 }

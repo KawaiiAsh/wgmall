@@ -12,4 +12,20 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    /**
+     * 查找所有比用户余额小的商品
+     * @param price
+     * @return
+     */
+    List<Product> findByPriceLessThanEqual(BigDecimal price);
+
+    /**
+     * 查找指定价格范围内的商品
+     * @param min
+     * @param max
+     * @return
+     */
+    List<Product> findByPriceBetween(BigDecimal min, BigDecimal max);
+
+
 }

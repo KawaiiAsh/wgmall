@@ -1,10 +1,10 @@
 package org.wgtech.wgmall_backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.JwtUtils;
@@ -13,71 +13,74 @@ import org.wgtech.wgmall_backend.utils.Result;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 认证相关接口（注册、登录）
+ */
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "认证接口", description = "提供用户注册与登录功能")
 public class AuthController {
 
     @Autowired
     private UserService userService;
 
     /**
-     * 注册功能
-     * @param username 用户名
-     * @param phone 手机号
-     * @param password 密码
-     * @param inviteCode 邀请码
-     * @param fundPassword 资金密码
-     * @param ip 用户的IP地址（前端传递）
-     * @return 注册结果的提示
+     * 用户注册接口
      */
     @PostMapping("/register")
+    @Operation(summary = "用户注册", description = "根据用户名、手机号、密码、邀请码等信息注册新用户")
     public Result<String> register(
+            @Parameter(description = "用户名", required = true)
             @RequestParam String username,
-            @RequestParam String phone,
-            @RequestParam String password,
-            @RequestParam(required = false) String inviteCode,
-            @RequestParam String fundPassword,
-            @RequestParam String ip) {  // 接收IP地址参数
 
-        // 调用服务层进行用户注册
+            @Parameter(description = "手机号", required = true)
+            @RequestParam String phone,
+
+            @Parameter(description = "登录密码", required = true)
+            @RequestParam String password,
+
+            @Parameter(description = "邀请码（必须））",required = true)
+            @RequestParam String inviteCode,
+
+            @Parameter(description = "资金密码", required = true)
+            @RequestParam String fundPassword,
+
+            @Parameter(description = "用户注册IP地址（由前端传入）", required = true)
+            @RequestParam String ip
+    ) {
         Result<User> result = userService.registerUser(username, phone, password, inviteCode, fundPassword, ip);
 
         if (result.getCode() == 200) {
-            // 注册成功，返回用户ID
             return Result.success("注册成功，用户ID：" + result.getData().getId());
         } else {
-            // 如果注册失败，返回失败消息
             return Result.failure(result.getMessage());
         }
     }
 
     /**
-     * 登录功能
-     * @param usernameOrPhone 用户名或手机号
-     * @param password 密码
-     * @return 登录结果的提示
+     * 用户登录接口
      */
     @PostMapping("/login")
+    @Operation(summary = "用户登录", description = "通过用户名或手机号 + 密码进行登录，返回Token")
     public Result<Map<String, Object>> login(
+            @Parameter(description = "用户名或手机号", required = true)
             @RequestParam String usernameOrPhone,
-            @RequestParam String password) {
 
-        // 调用服务层进行用户登录
+            @Parameter(description = "登录密码", required = true)
+            @RequestParam String password
+    ) {
         Result<User> result = userService.loginUser(usernameOrPhone, password);
 
         if (result.getCode() == 200) {
-            // 登录成功，生成 JWT token
             User user = result.getData();
-            String token = JwtUtils.generateToken(user.getUsername()); // 你已有 JwtUtils
+            String token = JwtUtils.generateToken(user.getUsername());
 
-            // 返回 token 和用户信息
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
-            data.put("user", user); // 可返回基本用户信息
+            data.put("user", user);
 
             return Result.success(data);
         } else {
-            // 登录失败，返回错误信息
             return Result.failure(result.getMessage());
         }
     }

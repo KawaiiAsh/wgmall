@@ -20,8 +20,16 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/auth/login",
                         "/auth/register",
-                        "/apply/**",
-                        "/products/**").permitAll()
+                        "/administrator/**",
+                        "/products/**",
+
+                        // ✅ 放行 Swagger UI
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/v3/api-docs",
+                        "/swagger-resources/**",
+                        "/webjars/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

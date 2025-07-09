@@ -68,6 +68,9 @@ public class Product {
     @JsonManagedReference // 与上面配对使用
     private List<ProductImage> images;  // 商品轮播图
 
+    @Transient
+    private String firstImagePath; // 不保存进数据库
+
     @PrePersist
     public void setDefaultUploader() {
         if (this.uploader == null || this.uploader.trim().isEmpty()) {
