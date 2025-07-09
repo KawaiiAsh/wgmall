@@ -177,4 +177,38 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         return Result.success(user);
     }
+
+    @Override
+    public Result<User> setGrabOrderEligibility(Long userId, boolean eligible) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            return Result.failure("用户不存在");
+        }
+
+        User user = optionalUser.get();
+        user.setToggle(eligible);
+        userRepository.save(user);
+        return Result.success(user);    }
+
+    @Override
+    public Result<User> setGrabOrderTimes(Long userId, int times) {
+        if (times < 0) {
+            return Result.failure("抢单次数不能为负");
+        }
+
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            return Result.failure("用户不存在");
+        }
+
+        User user = optionalUser.get();
+        user.setOrderCount(times);  // 假设有这个字段
+        userRepository.save(user);
+        return Result.success(user);    }
+
+    @Override
+    public Result<User> getUserById(Long userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        return optionalUser.map(Result::success).orElseGet(() -> Result.failure("用户不存在"));
+    }
 }

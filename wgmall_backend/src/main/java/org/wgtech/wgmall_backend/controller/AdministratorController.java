@@ -13,7 +13,7 @@ import org.wgtech.wgmall_backend.utils.Result;
 
 @RestController
 @RequestMapping("/administrator")
-@Tag(name = "管理员相接口", description = "管理员可以用的相关功能")
+@Tag(name = "管理员接口", description = "管理员用的相关功能")
 public class AdministratorController {
 
     @Autowired
@@ -50,32 +50,5 @@ public class AdministratorController {
         } catch (Exception e) {
             return Result.failure("创建业务员失败：" + e.getMessage());
         }
-    }
-
-    @PostMapping("/add-money")
-    @Operation(summary = "给用户加钱", description = "根据用户ID增加余额")
-    public Result<User> addMoney(
-            @RequestParam Long userId,
-            @RequestParam double amount
-    ) {
-        return userService.addMoney(userId, amount);
-    }
-
-    @PostMapping("/minus-money")
-    @Operation(summary = "扣除用户余额", description = "根据用户ID扣除余额")
-    public Result<User> minusMoney(
-            @RequestParam Long userId,
-            @RequestParam double amount
-    ) {
-        return userService.minusMoney(userId, amount);
-    }
-
-    @PostMapping("/set-level")
-    @Operation(summary = "设置用户等级", description = "根据用户ID设置等级")
-    public Result<User> setLevel(
-            @RequestParam Long userId,
-            @RequestParam int level
-    ) {
-        return userService.setLevel(userId, level);
     }
 }

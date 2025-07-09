@@ -22,6 +22,7 @@ public class SecurityConfig {
                         "/auth/register",
                         "/administrator/**",
                         "/products/**",
+                        "/user/**",
 
                         // ✅ 放行 Swagger UI
                         "/swagger-ui.html",

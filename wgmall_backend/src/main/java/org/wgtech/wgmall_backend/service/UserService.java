@@ -20,4 +20,13 @@ public interface UserService {
     // 根据id设置等级
     Result<User> setLevel(Long userId, int level);
 
+    // 设置用户抢单资格（true: 有资格，false: 无资格）
+    Result<User> setGrabOrderEligibility(Long userId, boolean eligible);
+
+    // 设置用户抢单次数
+    Result<User> setGrabOrderTimes(Long userId, int times);
+
+    // 查询用户信息
+    Result<User> getUserById(Long userId);
+
 }
