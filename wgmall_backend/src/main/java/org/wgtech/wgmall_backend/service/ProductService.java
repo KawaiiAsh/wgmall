@@ -10,44 +10,40 @@ import java.util.List;
 public interface ProductService {
 
     /**
-     * 创建商品
-     * @param name
-     * @param price
-     * @param description
-     * @param stock
-     * @param sales
-     * @param type
-     * @param uploader
-     * @param images
-     * @return
-     * @throws IOException
+     * 创建商品（支持上传图片）
+     * @param name 商品名
+     * @param price 商品价格
+     * @param description 商品描述
+     * @param stock 库存
+     * @param sales 销量
+     * @param type 商品类型（枚举）
+     * @param uploader 上传人用户名
+     * @param images 图片文件数组
+     * @return 创建成功的商品对象
+     * @throws IOException 上传图片失败
      */
     Product createProduct(String name, BigDecimal price, String description, Integer stock,
                           Integer sales, String type, String uploader, MultipartFile[] images) throws IOException;
 
-
     /**
-     * 查询所有比用户余额少的商品
-     * @param username
-     * @return
+     * 获取当前用户余额范围内可购买的商品
+     * @param username 用户名
+     * @return 商品列表
      */
     List<Product> getProductsAffordableByUser(String username);
 
     /**
-     * 查找指定价格范围内的商品
-     * @param min
-     * @param max
-     * @return
+     * 根据价格区间筛选商品
+     * @param min 最低价格
+     * @param max 最高价格
+     * @return 商品列表
      */
     List<Product> getProductsByPriceRange(BigDecimal min, BigDecimal max);
 
     /**
-     * 删除一个指定商品
-     * @param productId
-     * @throws IOException
+     * 根据商品ID删除商品（同时删除图片）
+     * @param productId 商品ID
+     * @throws IOException 文件删除失败
      */
     void deleteProductById(Long productId) throws IOException;
-
-
-
 }

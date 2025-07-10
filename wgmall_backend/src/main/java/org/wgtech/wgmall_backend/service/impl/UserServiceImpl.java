@@ -12,7 +12,6 @@ import org.wgtech.wgmall_backend.utils.InviteCodeGenerator;
 import org.wgtech.wgmall_backend.utils.IpLocationDetector;
 import org.wgtech.wgmall_backend.utils.Result;
 
-import javax.validation.constraints.Null;
 import java.util.Date;
 import java.util.Optional;
 
@@ -23,41 +22,38 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private AdministratorRepository administratorRepository; // 注入 AdministratorRepository
+    private AdministratorRepository administratorRepository;
 
     @Autowired
-    private InviteCodeGenerator inviteCodeGenerator;  // 注入邀请码生成器
+    private InviteCodeGenerator inviteCodeGenerator;
 
     @Autowired
-    private IpLocationDetector ipLocationDetector;  // 注入IP位置检测器
+    private IpLocationDetector ipLocationDetector;
 
-    // 用户注册
+    /**
+     * 用户注册
+     */
     @Override
     @Transactional
     public Result<User> registerUser(String username, String phone, String password, String inviteCode, String fundPassword, String ip) {
         try {
-            // 1. 检查用户名是否已存在
-            Optional<User> existingUserByUsername = userRepository.findByUsername(username);
-            if (existingUserByUsername.isPresent()) {
+            // 1. 检查用户名是否存在
+            if (userRepository.findByUsername(username).isPresent()) {
                 return Result.failure("用户名已存在");
             }
 
-            // 2. 检查手机号是否已被注册
-            Optional<User> existingUserByPhone = userRepository.findByPhone(phone);
-            if (existingUserByPhone.isPresent()) {
+            // 2. 检查手机号是否已注册
+            if (userRepository.findByPhone(phone).isPresent()) {
                 return Result.failure("手机号已被注册");
             }
 
-
-            // 3. 检测邀请码是否有效并查找上级昵称
+            // 3. 校验邀请码，并查找上级用户名（可以是管理员或用户）
             String superiorUsername = null;
             if (inviteCode != null && !inviteCode.isEmpty()) {
-                // 先查管理员
                 Optional<Administrator> adminOpt = administratorRepository.findByInviteCode(inviteCode);
                 if (adminOpt.isPresent()) {
                     superiorUsername = adminOpt.get().getNickname();
                 } else {
-                    // 再查用户
                     Optional<User> userOpt = userRepository.findByInviteCode(inviteCode);
                     if (userOpt.isPresent()) {
                         superiorUsername = userOpt.get().getUsername();
@@ -67,25 +63,23 @@ public class UserServiceImpl implements UserService {
                 }
             }
 
-            // 4. 创建用户并保存
-
-            // 获取国家信息
+            // 4. 检测 IP 归属地和是否重复注册
             String country = ipLocationDetector.getCountryByIp(ip);
-            // 检测IP是否重复
             int repeatIp = userRepository.countByIp(ip) > 0 ? 1 : 0;
 
+            // 5. 构造新用户对象
             User newUser = User.builder()
                     .username(username)
                     .nickname(username)
                     .phone(phone)
                     .password(password)
-                    .inviteCode(inviteCodeGenerator.generateUniqueInviteCode()) // 这里你可以生成或设置邀请码
-                    .fundPassword(String.valueOf(fundPassword)) // 将资金密码存储为字符串
-                    .superiorUsername(superiorUsername)  // 上级可以是客户，也可以是管理员
+                    .inviteCode(inviteCodeGenerator.generateUniqueInviteCode()) // 生成邀请码
+                    .fundPassword(String.valueOf(fundPassword))
+                    .superiorUsername(superiorUsername)
                     .ip(ip)
                     .orderCount(0)
-                    .isBanned(false) // 默认不被封禁
-                    .balance(0.0)  // 初始余额为 0
+                    .isBanned(false)
+                    .balance(0.0)
                     .toggle(false)
                     .canWithdraw(false)
                     .assignedStatus(false)
@@ -95,9 +89,10 @@ public class UserServiceImpl implements UserService {
                     .registerTime(new Date())
                     .lastLoginTime(new Date())
                     .repeatIp(repeatIp)
-                    .rebate(0.006)
+                    .rebate(0.006) // 默认返利
                     .build();
 
+            // 6. 保存用户
             User savedUser = userRepository.save(newUser);
             return Result.success(savedUser);
 
@@ -106,46 +101,48 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-
-
-    // 用户登录
+    /**
+     * 用户登录（支持用户名或手机号）
+     */
     @Override
     public Result<User> loginUser(String usernameOrPhone, String password) {
         try {
-            // 根据用户名或手机号查找用户
+            // 1. 查询用户（用户名或手机号）
             Optional<User> userOptional = userRepository.findByUsername(usernameOrPhone);
             if (!userOptional.isPresent()) {
                 userOptional = userRepository.findByPhone(usernameOrPhone);
             }
 
-            // 检查用户是否存在
+            // 2. 校验用户是否存在
             if (!userOptional.isPresent()) {
                 return Result.failure("用户名或手机号不存在");
             }
 
             User user = userOptional.get();
 
-            // 检查密码是否正确
+            // 3. 校验密码
             if (!user.getPassword().equals(password)) {
                 return Result.failure("密码错误");
             }
 
-            // 检查用户是否被封禁
+            // 4. 校验是否被封禁
             if (user.isBanned()) {
                 return Result.failure("用户已被封禁");
             }
 
-            // ✅ 更新上次登录时间
+            // 5. 更新登录时间
             user.setLastLoginTime(new Date());
-            userRepository.save(user); // 保存更新后的时间
+            userRepository.save(user);
 
             return Result.success(user);
-
         } catch (Exception e) {
             return Result.failure("登录失败，系统错误");
         }
     }
 
+    /**
+     * 增加用户余额
+     */
     @Override
     public Result<User> addMoney(Long userId, double amount) {
         Optional<User> optionalUser = userRepository.findById(userId);
@@ -159,6 +156,9 @@ public class UserServiceImpl implements UserService {
         return Result.success(user);
     }
 
+    /**
+     * 扣除用户余额
+     */
     @Override
     public Result<User> minusMoney(Long userId, double amount) {
         Optional<User> optionalUser = userRepository.findById(userId);
@@ -172,7 +172,9 @@ public class UserServiceImpl implements UserService {
         return Result.success(user);
     }
 
-
+    /**
+     * 设置用户是否允许抢单
+     */
     @Override
     public Result<User> setGrabOrderEligibility(Long userId, boolean eligible) {
         Optional<User> optionalUser = userRepository.findById(userId);
@@ -183,8 +185,12 @@ public class UserServiceImpl implements UserService {
         User user = optionalUser.get();
         user.setToggle(eligible);
         userRepository.save(user);
-        return Result.success(user);    }
+        return Result.success(user);
+    }
 
+    /**
+     * 设置用户抢单次数
+     */
     @Override
     public Result<User> setGrabOrderTimes(Long userId, int times) {
         if (times < 0) {
@@ -197,10 +203,14 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = optionalUser.get();
-        user.setOrderCount(times);  // 假设有这个字段
+        user.setOrderCount(times);
         userRepository.save(user);
-        return Result.success(user);    }
+        return Result.success(user);
+    }
 
+    /**
+     * 根据 ID 查询用户信息
+     */
     @Override
     public Result<User> getUserById(Long userId) {
         Optional<User> optionalUser = userRepository.findById(userId);
