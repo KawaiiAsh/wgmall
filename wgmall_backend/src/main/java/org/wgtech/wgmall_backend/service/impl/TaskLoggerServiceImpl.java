@@ -64,27 +64,6 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
     }
 
     /**
-     * 发布一个“指定”类型的任务（明确指定商品）
-     */
-    @Override
-    public boolean publishAssignedTask(Long userId, String username, Long productId, BigDecimal amount, Double rebate, String dispatcher) {
-        TaskLogger task = TaskLogger.builder()
-                .userId(userId)
-                .username(username)
-                .productId(productId)
-                .productAmount(amount)
-                .dispatchType(TaskLogger.DispatchType.ASSIGNED)
-                .rebate(rebate)
-                .dispatcher(dispatcher)  // 由调用方指定发布人
-                .createTime(LocalDateTime.now())
-                .completed(false)
-                .taken(false)
-                .build();
-        taskLoggerRepository.save(task);
-        return true;
-    }
-
-    /**
      * 发布一个“预留”类型的任务（通常是为特定用户准备的）
      */
     @Override
@@ -106,16 +85,6 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
     }
 
     /**
-     * 查询用户未领取的“指定任务”
-     */
-    @Override
-    public Optional<TaskLogger> findUnTakenAssignedTask(Long userId) {
-        return taskLoggerRepository.findFirstByUserIdAndDispatchTypeAndTakenFalseOrderByCreateTimeAsc(
-                userId, TaskLogger.DispatchType.ASSIGNED
-        );
-    }
-
-    /**
      * 查询用户未领取的“预留任务”
      */
     @Override
@@ -125,6 +94,35 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
         );
     }
 
+    @Override
+    public List<TaskLogger> findUnTakenReservedTasks(Long userId) {
+        return taskLoggerRepository.findByUserIdAndDispatchTypeAndTakenFalseAndCompletedFalseOrderByCreateTimeAsc(
+                userId,
+                TaskLogger.DispatchType.RESERVED
+        );
+    }
+
+    @Override
+    public int countUnTakenReservedTasks(Long userId) {
+        return taskLoggerRepository.countByUserIdAndDispatchTypeAndTakenFalse(
+                userId,
+                TaskLogger.DispatchType.RESERVED
+        );
+    }
+
+    @Override
+    public int countUnCompletedReservedTasks(Long userId) {
+        return taskLoggerRepository.countByUserIdAndDispatchTypeAndCompletedFalse(
+                userId,
+                TaskLogger.DispatchType.RESERVED
+        );
+    }
+
+    @Override
+    public Optional<TaskLogger> findById(Long id) {
+        return taskLoggerRepository.findById(id);
+    }
+
     /**
      * 保存任务（用于更新状态如领取、完成等）
      */
@@ -132,4 +130,11 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
     public void save(TaskLogger taskLogger) {
         taskLoggerRepository.save(taskLogger);
     }
+
+    @Override
+    public Optional<TaskLogger> findPendingTaskByUserId(Long userId) {
+        return taskLoggerRepository.findFirstByUserIdAndTakenTrueAndCompletedFalseOrderByCreateTimeAsc(userId);
+    }
+
+
 }

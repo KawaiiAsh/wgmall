@@ -49,9 +49,6 @@ public class Product {
     @NotNull(message = "价格不能为空")
     private BigDecimal price;  // 商品价格
 
-    @Lob
-    private String description;  // 商品详情
-
     @NotNull(message = "库存不能为空")
     private Integer stock;  // 库存
 

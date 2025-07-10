@@ -6,12 +6,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.repository.AdministratorRepository;
+import org.wgtech.wgmall_backend.repository.TaskLoggerRepository;
 import org.wgtech.wgmall_backend.repository.UserRepository;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.InviteCodeGenerator;
 import org.wgtech.wgmall_backend.utils.IpLocationDetector;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.Optional;
 
@@ -23,6 +27,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private AdministratorRepository administratorRepository;
+
+    @Autowired
+    private TaskLoggerRepository taskLoggerRepository;
 
     @Autowired
     private InviteCodeGenerator inviteCodeGenerator;
@@ -82,13 +89,13 @@ public class UserServiceImpl implements UserService {
                     .balance(0.0)
                     .toggle(false)
                     .canWithdraw(false)
-                    .assignedStatus(false)
                     .appointmentStatus(false)
                     .appointmentNumber(null)
                     .country(country)
                     .registerTime(new Date())
                     .lastLoginTime(new Date())
                     .repeatIp(repeatIp)
+                    .totalProfit(0.0)
                     .rebate(0.006) // 默认返利
                     .build();
 
@@ -209,11 +216,48 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 根据 ID 查询用户信息
+     * 根据用户id查询用户信息
+     * @param userId
+     * @return
      */
     @Override
-    public Result<User> getUserById(Long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        return optionalUser.map(Result::success).orElseGet(() -> Result.failure("用户不存在"));
+    public Result<User> getUserInfoById(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return Result.failure("用户不存在");
+        }
+
+        User user = userOpt.get();
+        user.setPassword(null); // 避免暴露密码等敏感字段
+        return Result.success(user);
     }
+
+    /**
+     * 根据用户id设置返点
+     * @param userId
+     * @param rebate
+     */
+    public void setRebate(Long userId, double rebate) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+
+        user.setRebate(rebate);
+        userRepository.save(user);
+    }
+
+    @Override
+    public double getTodayProfit(Long userId) {
+        LocalDateTime start = LocalDate.now().atStartOfDay(); // 今日 00:00
+        LocalDateTime end = LocalDateTime.now();
+        return taskLoggerRepository.calculateProfitBetween(userId, start, end);
+    }
+
+    @Override
+    public double getYesterdayProfit(Long userId) {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDateTime start = yesterday.atStartOfDay(); // 昨日 00:00
+        LocalDateTime end = yesterday.atTime(LocalTime.MAX); // 昨日 23:59:59.999
+        return taskLoggerRepository.calculateProfitBetween(userId, start, end);
+    }
+
 }

@@ -5,8 +5,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.entity.User;
+import org.wgtech.wgmall_backend.repository.UserRepository;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.Result;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 用户操作控制器
@@ -19,6 +23,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * 给用户账户加钱
@@ -83,4 +90,50 @@ public class UserController {
     ) {
         return userService.setGrabOrderTimes(userId, times);
     }
+
+    /**
+     * 获取当前登录用户的信息
+     *
+     * @return 用户信息
+     */
+    @GetMapping("/info")
+    @Operation(summary = "获取指定用户信息（开发用）", description = "开发阶段通过 userId 查询用户信息")
+    public Result<User> getUserInfo(@RequestParam Long userId) {
+        return userService.getUserInfoById(userId);
+    }
+
+    /**
+     * 根据用户id设置返点
+     * @param userId
+     * @param rebate
+     * @return
+     */
+    @PutMapping("/setRebate")
+    @Operation(summary = "设置用户返点", description = "根据用户ID设置用户返点")
+    public Result<String> setUserRebate(@RequestParam Long userId,
+                                        @RequestParam double rebate) {
+
+        try {
+            userService.setRebate(userId, rebate);
+            return Result.success("返点设置成功为：" + rebate);
+        } catch (IllegalArgumentException e) {
+            return Result.failure(e.getMessage());
+        }
+    }
+
+    @GetMapping("/profit")
+    @Operation(summary = "获取用户盈利统计")
+    public Result<Map<String, Object>> getProfit(@RequestParam Long userId) {
+        double today = userService.getTodayProfit(userId);
+        double yesterday = userService.getYesterdayProfit(userId);
+        double total = userRepository.findById(userId).get().getTotalProfit();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("today", today);
+        result.put("yesterday", yesterday);
+        result.put("total", total);
+
+        return Result.success(result);
+    }
+
 }

@@ -32,7 +32,6 @@ public class ProductController {
      *
      * @param name 商品名称
      * @param price 商品价格
-     * @param description 商品描述（可选）
      * @param stock 库存数量
      * @param sales 初始销量
      * @param type 商品类型（如 ELECTRONICS、FOOD）
@@ -48,9 +47,6 @@ public class ProductController {
 
             @Parameter(description = "商品价格", required = true)
             @RequestParam BigDecimal price,
-
-            @Parameter(description = "商品描述", required = false)
-            @RequestParam(required = false) String description,
 
             @Parameter(description = "库存数量", required = true)
             @RequestParam Integer stock,
@@ -70,7 +66,7 @@ public class ProductController {
         try {
             // 调用服务层创建商品
             Product product = productService.createProduct(
-                    name, price, description, stock, sales, type, uploader, images
+                    name, price, stock, sales, type, uploader, images
             );
             return Result.success(product);
         } catch (Exception e) {
@@ -136,5 +132,10 @@ public class ProductController {
             e.printStackTrace();
             return Result.failure("删除失败: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/debug")
+    public String debug() {
+        return "debug ok";
     }
 }

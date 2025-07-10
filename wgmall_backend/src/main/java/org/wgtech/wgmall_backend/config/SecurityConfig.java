@@ -24,29 +24,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         return http
-                .csrf().disable() // 关闭 CSRF 防护，适用于前后端分离的接口调用
+                .csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers(
-                        "/auth/login",        // 登录接口放行
-                        "/auth/register",     // 注册接口放行
-                        "/administrator/**",  // 后台管理接口放行（可根据需要修改）
-                        "/products/**",       // 商品相关接口放行
-                        "/user/**",           // 用户相关接口放行
-                        // ✅ Swagger 接口文档资源放行，方便开发调试
-                        "/swagger-ui.html",
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/v3/api-docs",
-                        "/swagger-resources/**",
-                        "/webjars/**"
-                ).permitAll() // 上述接口无需认证即可访问
-                .anyRequest().authenticated() // 其余所有请求都需认证
+                .anyRequest().permitAll() // ✅ 放行所有请求
                 .and()
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 不使用 Session，改用 JWT 方式
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 无状态
                 .and()
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) // 在用户名密码过滤器之前加入 JWT 过滤器
-                .build();
+                .build(); // ✅ 不添加 jwtFilter
     }
 
     /**

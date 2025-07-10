@@ -31,14 +31,13 @@ public class ProductServiceImpl implements ProductService {
      * 创建商品（包含上传图片）
      */
     @Override
-    public Product createProduct(String name, BigDecimal price, String description, Integer stock,
+    public Product createProduct(String name, BigDecimal price, Integer stock,
                                  Integer sales, String type, String uploader, MultipartFile[] images) throws IOException {
 
         // 构造商品对象（此时没有图片）
         Product product = Product.builder()
                 .name(name)
                 .price(price)
-                .description(description)
                 .stock(stock)
                 .sales(sales)
                 .uploader(uploader)

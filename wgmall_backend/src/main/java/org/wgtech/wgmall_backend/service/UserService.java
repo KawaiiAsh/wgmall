@@ -58,9 +58,18 @@ public interface UserService {
     Result<User> setGrabOrderTimes(Long userId, int times);
 
     /**
-     * 根据ID获取用户信息
-     * @param userId 用户ID
+     * 根据用户id查询用户信息
+     * @param userId
      * @return 用户信息
      */
-    Result<User> getUserById(Long userId);
+    Result<User> getUserInfoById(Long userId);
+
+    /**
+     * 根据用户id设置返点
+     */
+    void setRebate(Long userId, double rebate);
+
+    double getTodayProfit(Long userId);
+    double getYesterdayProfit(Long userId);
+
 }

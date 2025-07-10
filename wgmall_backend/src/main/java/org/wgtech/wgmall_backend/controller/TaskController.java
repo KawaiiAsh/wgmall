@@ -13,6 +13,8 @@ import org.wgtech.wgmall_backend.service.TaskLoggerService;
 import org.wgtech.wgmall_backend.utils.Result;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 任务控制器 - 实现刷单流程中涉及的任务分发与领取
@@ -32,17 +34,7 @@ public class TaskController {
     TaskLoggerService taskLoggerService;
 
     /**
-     * 用户执行抢单
-     * 处理逻辑：
-     * 1. 检查是否有未完成任务
-     * 2. 判断系统是否允许抢单（并发控制）
-     * 3. 检查用户是否还有抢单次数
-     * 4. 根据用户状态分派任务：
-     *    - 指定派单
-     *    - 预约派单
-     *    - 随机派单（匹配用户余额）
-     * 5. 更新用户抢单次数和任务状态
-     * 6. 返回任务响应结果
+     * 用户执行抢单（仅支持预约派单 + 随机派单）
      */
     @PostMapping("/grab")
     @Operation(summary = "执行抢单")
@@ -69,73 +61,96 @@ public class TaskController {
 
         TaskLogger task = null;
 
-        // 5.1 指定派单：用户被管理员明确派单
-        if (user.isAssignedStatus()) {
-            task = taskLoggerService.findUnTakenAssignedTask(userId).orElse(null);
-            if (task == null) {
-                return Result.failure("未找到分配给你的指定任务");
-            }
-            task.setTaken(true); // 标记任务为已领取
-            user.setAssignedStatus(false); // 清除指定状态
-
-            // 5.2 预约派单：用户预约了任务并达到数量要求
-        } else if (user.isAppointmentStatus()
+        // 5. 优先预约派单（支持多个预约任务）
+        if (user.isAppointmentStatus()
                 && user.getOrderCount() == user.getAppointmentNumber()) {
-            task = taskLoggerService.findUnTakenReservedTask(userId).orElse(null);
-            if (task == null) {
-                return Result.failure("未找到预约派单任务");
-            }
-            task.setTaken(true);
-            user.setAppointmentStatus(false); // 清除预约状态
 
-            // 5.3 随机派单：默认模式，根据用户余额分配合适的商品
+            List<TaskLogger> reservedTasks = taskLoggerService.findUnTakenReservedTasks(userId);
+
+            task = reservedTasks.get(0); // 默认领取最早的一个
+            task.setTaken(true);
+
+            // ✅ 如果所有预约任务都已完成，清除预约状态
+            if (taskLoggerService.countUnCompletedReservedTasks(userId) == 0) {
+                user.setAppointmentStatus(false);
+            }
+
         } else {
+            // 6. 随机派单
             task = taskLoggerService.publishRandomTask(
                     user.getId(),
                     user.getUsername(),
-                    BigDecimal.valueOf(user.getBalance()) // 用余额匹配商品金额
+                    BigDecimal.valueOf(user.getBalance())
             );
+
             if (task == null) {
                 return Result.failure("暂无适合您余额的商品，无法派发任务");
             }
         }
 
-        // 6. 更新抢单次数和保存状态
+        // 7. 更新用户状态与任务状态
         user.setOrderCount(user.getOrderCount() - 1);
-        userRepository.save(user);     // 更新用户
-        taskLoggerService.save(task);  // 更新任务状态
+        userRepository.save(user);
+        taskLoggerService.save(task);
 
-        // 7. 构造响应返回
+        // 8. 构造并返回响应结果
         TaskResponse response = new TaskResponse(
                 task.getId(),
                 task.getProductId(),
                 task.getProductAmount(),
-                task.getDispatchType().name(), // ASSIGNED / RESERVED / RANDOM
-                true // 所有任务默认都需付款
+                task.getDispatchType().name(),
+                true
         );
 
         return Result.success(response);
     }
 
-    /**
-     * 管理员发布“指定派单”任务
-     * 该任务只派发给特定用户
-     */
-    @PostMapping("/assign")
-    @Operation(summary = "管理员发布指定派单任务")
-    public Result<String> assignTask(
-            @RequestParam Long userId,
-            @RequestParam String username,
-            @RequestParam Long productId,
-            @RequestParam BigDecimal productAmount,
-            @RequestParam Double commissionRate,
-            @RequestParam String dispatcher // 操作人（管理员名）
-    ) {
-        boolean success = taskLoggerService.publishAssignedTask(
-                userId, username, productId, productAmount, commissionRate, dispatcher
-        );
-        return success ? Result.success("指定任务发布成功") : Result.failure("指定任务发布失败");
+    @PostMapping("/complete")
+    @Operation(summary = "完成任务（加返利）")
+    public Result<String> completeTask(@RequestParam Long taskId) {
+        TaskLogger task = taskLoggerService.findById(taskId)
+                .orElse(null);
+
+        if (task == null) {
+            return Result.failure("任务不存在");
+        }
+
+        if (Boolean.TRUE.equals(task.getCompleted())) {
+            return Result.failure("任务已完成，不能重复提交");
+        }
+
+        // 获取用户（已确认用户一定存在）
+        User user = userRepository.findById(task.getUserId()).get();
+
+        // 标记任务为完成
+        task.setCompleted(true);
+        task.setCompleteTime(LocalDateTime.now()); //  记录完成时间
+
+        // ✅ 根据任务类型选择返利比例
+        double rebateRate;
+        if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED) {
+            rebateRate = task.getRebate(); // 来自业务员设定
+        } else {
+            rebateRate = user.getRebate(); // 用户自己的返利比例
+        }
+
+        // 计算返利金额：商品金额 × 返利比例
+        BigDecimal rebateAmount = task.getProductAmount()
+                .multiply(BigDecimal.valueOf(rebateRate));
+
+        // 累加用户总盈利
+        user.setTotalProfit(user.getTotalProfit() + rebateAmount.doubleValue());
+
+        // 可选：发放到账户余额
+         user.setBalance(user.getBalance() + rebateAmount.doubleValue());
+
+        // 保存更新
+        taskLoggerService.save(task);
+        userRepository.save(user);
+
+        return Result.success("任务已完成，返利：" + rebateAmount);
     }
+
 
     /**
      * 管理员发布“预约派单”任务
@@ -156,4 +171,26 @@ public class TaskController {
         );
         return success ? Result.success("预约任务发布成功") : Result.failure("预约任务发布失败");
     }
+
+    @GetMapping("/pending")
+    @Operation(summary = "查询当前用户未完成任务（购物车）")
+    public Result<TaskResponse> getPendingTask(@RequestParam Long userId) {
+        TaskLogger task = taskLoggerService.findPendingTaskByUserId(userId)
+                .orElse(null);
+
+        if (task == null) {
+            return Result.failure("你没有未完成的任务");
+        }
+
+        TaskResponse response = new TaskResponse(
+                task.getId(),
+                task.getProductId(),
+                task.getProductAmount(),
+                task.getDispatchType().name(),
+                true
+        );
+
+        return Result.success(response);
+    }
+
 }

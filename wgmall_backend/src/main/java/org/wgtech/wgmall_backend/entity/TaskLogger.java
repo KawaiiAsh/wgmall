@@ -33,7 +33,7 @@ public class TaskLogger {
     private BigDecimal productAmount;  // 商品金额
 
     @NotNull(message = "派单类型不能为空")
-    private DispatchType dispatchType;  // 派单类型（RANDOM / RESERVED / ASSIGNED）
+    private DispatchType dispatchType;  // 派单类型（RANDOM / RESERVED）
 
     private Double rebate;  // 比例
 
@@ -42,6 +42,8 @@ public class TaskLogger {
     @NotNull
     private LocalDateTime createTime;  // 日志创建时间
 
+    private LocalDateTime completeTime; // 任务完成时间（用于盈利统计）
+
     private Boolean completed = false;  // 是否完成：true/false
 
     private Boolean taken = false; // 是否被领取
@@ -49,7 +51,6 @@ public class TaskLogger {
     public enum DispatchType {
         RANDOM,
         RESERVED,  // 预约派单
-        ASSIGNED   // 指定派单
     }
 }
 

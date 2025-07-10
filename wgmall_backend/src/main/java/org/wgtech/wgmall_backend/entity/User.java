@@ -74,9 +74,6 @@ public class User {
     @NotNull(message = "是否可以提款") // 默认是false，手动开启可以是true
     private boolean canWithdraw;
 
-    @NotNull(message = "是否处于指定派单状态")
-    private boolean assignedStatus;   // 是否处于指定派单状态,默认是false，手动开启可以是true
-
     @NotNull(message = "是否处于预约派单状态")
     private boolean appointmentStatus;          // 是否处于指定预约派单状态,默认是false,手动开启是true
 
@@ -84,6 +81,8 @@ public class User {
 
     @NotNull(message = "返点")
     private double rebate;              // 一级返点是0.006，二级返点是0.02，三级返点是0.06。
+
+    private double totalProfit; // 用户累计获得的利润
 
     // 银行卡信息
     @Size(min = 1, max = 50, message = "银行卡名称长度在1到50个字符之间")

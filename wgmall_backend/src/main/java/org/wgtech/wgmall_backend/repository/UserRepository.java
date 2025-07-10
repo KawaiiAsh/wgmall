@@ -46,4 +46,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return 使用该IP的用户数量
      */
     long countByIp(String ip);
+
+
 }
