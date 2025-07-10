@@ -39,7 +39,7 @@ import java.util.List;
 
     public enum Role {
         SALES,    // 业务员
-        MANAGER,  // 主管
+        MANAGER,  // 客服
         ADMIN     // 管理员
     }
 }

@@ -37,15 +37,6 @@ public class UserController {
         return userService.minusMoney(userId, amount);
     }
 
-    @PostMapping("/set-level")
-    @Operation(summary = "设置用户等级", description = "根据用户ID设置等级")
-    public Result<User> setLevel(
-            @RequestParam Long userId,
-            @RequestParam int level
-    ) {
-        return userService.setLevel(userId, level);
-    }
-
     @PostMapping("/set-grab-eligibility")
     @Operation(summary = "设置用户抢单资格", description = "根据用户ID设置能否抢单")
     public Result<User> setGrabEligibility(

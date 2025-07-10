@@ -17,9 +17,6 @@ public interface UserService {
     // 根据id减钱
     Result<User> minusMoney(Long userId, double amount);
 
-    // 根据id设置等级
-    Result<User> setLevel(Long userId, int level);
-
     // 设置用户抢单资格（true: 有资格，false: 无资格）
     Result<User> setGrabOrderEligibility(Long userId, boolean eligible);
 

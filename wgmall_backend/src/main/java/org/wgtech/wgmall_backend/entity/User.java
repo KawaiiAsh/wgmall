@@ -62,10 +62,6 @@ public class User {
     @NotNull(message = "封禁状态不能为空")  // 非空校验
     private boolean isBanned;         // 是否被封禁
 
-    @NotNull(message = "等级不能为空")  // 非空校验
-    @Builder.Default  // 设置默认值为1
-    private int level = 1;             // 等级（默认值为1）
-
     @NotNull(message = "资金密码不能为空") // 资金密码
     private String fundPassword;
 
@@ -78,9 +74,16 @@ public class User {
     @NotNull(message = "是否可以提款") // 默认是false，手动开启可以是true
     private boolean canWithdraw;
 
-    private boolean hasAssignedOrder;   // ✔️ 是否存在一个待领取的指派订单或者预约订单
+    @NotNull(message = "是否处于指定派单状态")
+    private boolean assignedStatus;   // 是否处于指定派单状态,默认是false，手动开启可以是true
 
-    private int reservedIndex;          // ✔️ 倒数第几单触发预约订单（类型3，可选）
+    @NotNull(message = "是否处于预约派单状态")
+    private boolean appointmentStatus;          // 是否处于指定预约派单状态,默认是false,手动开启是true
+
+    private Integer appointmentNumber;         // 如果是NULL，不然就是用户的刷单次数还剩多少，appointmentNumber就是预约派单的。
+
+    @NotNull(message = "返点")
+    private double rebate;              // 一级返点是0.006，二级返点是0.02，三级返点是0.06。
 
     // 银行卡信息
     @Size(min = 1, max = 50, message = "银行卡名称长度在1到50个字符之间")
@@ -96,17 +99,4 @@ public class User {
 
     private String country;           // 国家
 
-    // 计算用户的返点
-    public double getRebate() {
-        switch (this.level) {
-            case 1:
-                return 0.6;  // 一级返点 0.6%
-            case 2:
-                return 2.0;  // 二级返点 2%
-            case 3:
-                return 6.0;  // 三级返点 6%
-            default:
-                return 0.6;  // 默认返回0.6%
-        }
-    }
 }

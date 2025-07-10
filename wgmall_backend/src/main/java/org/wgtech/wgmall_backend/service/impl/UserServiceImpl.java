@@ -12,6 +12,7 @@ import org.wgtech.wgmall_backend.utils.InviteCodeGenerator;
 import org.wgtech.wgmall_backend.utils.IpLocationDetector;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import javax.validation.constraints.Null;
 import java.util.Date;
 import java.util.Optional;
 
@@ -82,13 +83,19 @@ public class UserServiceImpl implements UserService {
                     .fundPassword(String.valueOf(fundPassword)) // 将资金密码存储为字符串
                     .superiorUsername(superiorUsername)  // 上级可以是客户，也可以是管理员
                     .ip(ip)
+                    .orderCount(0)
                     .isBanned(false) // 默认不被封禁
                     .balance(0.0)  // 初始余额为 0
                     .toggle(false)
+                    .canWithdraw(false)
+                    .assignedStatus(false)
+                    .appointmentStatus(false)
+                    .appointmentNumber(null)
                     .country(country)
                     .registerTime(new Date())
                     .lastLoginTime(new Date())
                     .repeatIp(repeatIp)
+                    .rebate(0.006)
                     .build();
 
             User savedUser = userRepository.save(newUser);
@@ -165,18 +172,6 @@ public class UserServiceImpl implements UserService {
         return Result.success(user);
     }
 
-    @Override
-    public Result<User> setLevel(Long userId, int level) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) {
-            return Result.failure("用户ID不存在");
-        }
-
-        User user = optionalUser.get();
-        user.setLevel(level);
-        userRepository.save(user);
-        return Result.success(user);
-    }
 
     @Override
     public Result<User> setGrabOrderEligibility(Long userId, boolean eligible) {

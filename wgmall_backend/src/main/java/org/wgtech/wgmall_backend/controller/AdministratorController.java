@@ -7,9 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.entity.User;
+import org.wgtech.wgmall_backend.service.AdministratorService;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.SalespersonCreator;
 import org.wgtech.wgmall_backend.utils.Result;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/administrator")
@@ -21,6 +24,9 @@ public class AdministratorController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AdministratorService administratorService;
     /**
      * 创建业务员账号
      *
@@ -50,5 +56,13 @@ public class AdministratorController {
         } catch (Exception e) {
             return Result.failure("创建业务员失败：" + e.getMessage());
         }
+    }
+
+
+    @GetMapping("/sales")
+    @Operation(summary = "获取所有业务员", description = "列出所有角色为SALES的管理员")
+    public Result<List<Administrator>> getAllSales() {
+        List<Administrator> sales = administratorService.getAllSales();
+        return Result.success(sales);
     }
 }
