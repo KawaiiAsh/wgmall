@@ -49,7 +49,7 @@ public interface TaskLoggerRepository extends JpaRepository<TaskLogger, Long> {
             "CASE WHEN t.dispatchType = 'RESERVED' THEN t.rebate ELSE u.rebate END), 0) " +
             "FROM TaskLogger t JOIN User u ON t.userId = u.id " +
             "WHERE t.userId = :userId AND t.completed = true " +
-            "AND t.completeTime BETWEEN :start AND :end")   
+            "AND t.completeTime BETWEEN :start AND :end")
     double calculateProfitBetween(@Param("userId") Long userId,
                                   @Param("start") LocalDateTime start,
                                   @Param("end") LocalDateTime end);

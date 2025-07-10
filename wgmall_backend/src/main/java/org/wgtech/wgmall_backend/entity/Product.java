@@ -24,7 +24,7 @@ public class Product {
         CLOTHING,       // 服饰
         BEAUTY,         // 美妆个护
         BOOKS,          // 图书
-        DIGITAL,        // 虚拟商品/软件
+        WRISTWATCH,        // 手表
         TOYS,           // 玩具
         FURNITURE,      // 家具
         SPORTS,         // 体育用品
