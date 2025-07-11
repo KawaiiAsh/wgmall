@@ -19,25 +19,20 @@ import java.util.List;
 public class Product {
 
     public enum ProductType {
-        ELECTRONICS,    // 电子产品
-        FOOD,           // 食品
-        CLOTHING,       // 服饰
-        BEAUTY,         // 美妆个护
-        BOOKS,          // 图书
-        WRISTWATCH,        // 手表
-        TOYS,           // 玩具
-        FURNITURE,      // 家具
-        SPORTS,         // 体育用品
-        JEWELRY,        // 首饰
-        HOME_APPLIANCE, // 家电
-        PET_SUPPLIES,   // 宠物用品
-        STATIONERY,     // 文具办公
-        CAR_ACCESSORY,  // 汽车用品
-        HEALTH,         // 健康保健
-        BABY,           // 母婴
-        GROCERY,        // 杂货
-        OTHER           // 其他
+        WOMEN_CLOTHING,//女衣服
+        WOMEN_SHOES,//女鞋
+        MENS_CLOTHING,//男衣服
+        MENS_SHOES,//男鞋
+        HOME_GOODS,//家具
+        JEWELRY_WATCHES,//手表
+        TOYS,//儿童
+        ELECTRONICS,//手机
+        GIFT_CARD,//礼品卡
+        OFFICE_SUPPLIES,//办公
+        BEAUTY_PRODUCTS,//化妆品
+        HEAD_ORNAMENT//首饰
     }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

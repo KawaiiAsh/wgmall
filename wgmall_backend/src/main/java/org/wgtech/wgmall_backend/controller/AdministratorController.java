@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController // 声明这是一个 REST 控制器，返回值默认以 JSON 形式响应
 @RequestMapping("/administrator") // 设置请求路径前缀为 /administrator
-@Tag(name = "管理员接口", description = "管理员用的相关功能") // Swagger 文档标签
+@Tag(name = "工作人员接口", description = "创建，封禁，获取所有业务员，客服的功能") // Swagger 文档标签
 public class AdministratorController {
 
     @Autowired
@@ -42,7 +42,7 @@ public class AdministratorController {
             summary = "创建业务员账号",
             description = "管理员调用此接口可创建一个新的业务员账号，包含用户名、昵称和密码。"
     )
-    public Result createSalesperson(
+    public Result<Administrator> createSalesperson(
             @Parameter(description = "用户名（唯一）", required = true)
             @RequestParam String username,
 
@@ -53,9 +53,15 @@ public class AdministratorController {
             @RequestParam String password
     ) {
         try {
-            // 调用工具类创建业务员账号
+            // 校验逻辑（可选）：空值、长度等
+            if (username.isBlank() || password.isBlank() || nickname.isBlank()) {
+                return Result.failure("用户名、密码、昵称不能为空");
+            }
+
             Administrator admin = salespersonCreator.createSalesperson(username, nickname, password);
-            return Result.success(admin);  // 创建成功，返回业务员信息
+            return Result.success(admin);
+        } catch (IllegalArgumentException ex) {
+            return Result.custom(400, "参数非法：" + ex.getMessage(), null);
         } catch (Exception e) {
             return Result.failure("创建业务员失败：" + e.getMessage());
         }
@@ -74,5 +80,25 @@ public class AdministratorController {
     public Result<List<Administrator>> getAllSales() {
         List<Administrator> sales = administratorService.getAllSales(); // 查询业务员列表
         return Result.success(sales);  // 返回结果
+    }
+
+    /**
+     * 封禁管理员账号
+     *
+     * 接口地址：POST /administrator/ban/{id}
+     * 管理员可以调用此接口来封禁指定的管理员账号
+     *
+     * @param id 管理员ID
+     * @return 操作结果
+     */
+    @PostMapping("/bansales/{id}")
+    @Operation(summary = "封禁业务员账号", description = "将指定业务员账号的 isBanned 设置为 true")
+    public Result<Void> banAdministrator(@PathVariable int id) {
+        try {
+            administratorService.banAdministrator(id);
+            return Result.success();
+        } catch (Exception e) {
+            return Result.failure("封禁失败：" + e.getMessage());
+        }
     }
 }

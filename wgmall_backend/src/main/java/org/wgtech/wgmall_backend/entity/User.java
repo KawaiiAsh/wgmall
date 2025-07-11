@@ -48,6 +48,9 @@ public class User {
     @NotNull(message = "接单数量不能为空")  // 非空校验
     private int orderCount;           // 可刷单数量
 
+    @NotNull(message = "总刷单次数")
+    private int totalOrderCount;
+
     private String remarks;           // 备注（可以为空）
 
     @NotNull(message = "注册时间不能为空")  // 非空校验
@@ -84,7 +87,15 @@ public class User {
 
     private double totalProfit; // 用户累计获得的利润
 
-    // 银行卡信息
+    @NotNull(message = "买家还是卖家")
+    private int buyerOrSaler; // 身份 0买家，1是卖家
+
+    // 收款信息
+    private String tronWalletAddress;
+    private String bitCoinWalletAddress;
+    private String ethWalletAddress;
+    private String coinWalletAddress;
+
     @Size(min = 1, max = 50, message = "银行卡名称长度在1到50个字符之间")
     private String bankName;          // 银行卡名称（可以为空）
 
@@ -97,5 +108,13 @@ public class User {
     private String bankCardCVV;       // 银行卡后三位（可以为空）
 
     private String country;           // 国家
+
+    // 活动属性
+    @NotNull(message = "用户的抽奖次数")
+    private int redBagDrawCount;        // 用户的红包抽取次数
+
+    @NotNull(message = "用户的总抽奖数或者第几天")
+    private int redBagCount;        // 红包领取次数or第几天
+
 
 }

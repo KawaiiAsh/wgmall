@@ -11,8 +11,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class TaskResponse {
     private Long taskId;                     // 日志ID
+    private String firstImagePath;           // 商品图片
+    private String productName;             // 商品名称
     private Long productId;                 // 商品ID
     private BigDecimal productAmount;       // 商品金额
     private String dispatchType;            // 派单类型：RANDOM / ASSIGNED / RESERVED
-    private boolean needToPay;              // 是否需要立即付款
 }

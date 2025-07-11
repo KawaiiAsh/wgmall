@@ -31,6 +31,10 @@ public class Result<T> {
     // 错误信息的详细列表 (适用于复杂错误情况)
     private List<String> errors;
 
+    public static <T> Result<T> success() {
+        return new Result<>(200, "操作成功", null, System.currentTimeMillis(), null, null);
+    }
+
     // 静态方法：成功返回，返回普通数据
     public static <T> Result<T> success(T data) {
         return new Result<>(200, "操作成功", data, System.currentTimeMillis(), null, null);

@@ -56,6 +56,7 @@ public interface TaskLoggerRepository extends JpaRepository<TaskLogger, Long> {
 
     Optional<TaskLogger> findFirstByUserIdAndTakenTrueAndCompletedFalseOrderByCreateTimeAsc(Long userId);
 
+    List<TaskLogger> findByUserIdAndCompletedTrueOrderByCompleteTimeDesc(Long userId);
 
 
 }

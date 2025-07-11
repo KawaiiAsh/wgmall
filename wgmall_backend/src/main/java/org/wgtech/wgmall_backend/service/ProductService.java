@@ -45,4 +45,8 @@ public interface ProductService {
      * @throws IOException 文件删除失败
      */
     void deleteProductById(Long productId) throws IOException;
+
+    List<Product> getRandomProducts();
+    List<Product> getRandomProductsByType(Product.ProductType type);
+
 }

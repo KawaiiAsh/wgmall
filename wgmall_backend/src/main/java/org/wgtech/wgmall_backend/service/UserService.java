@@ -72,4 +72,6 @@ public interface UserService {
     double getTodayProfit(Long userId);
     double getYesterdayProfit(Long userId);
 
+    int setBuyerOrSaler(Long userId,int buyerOrSaler);
+
 }

@@ -1,6 +1,8 @@
 package org.wgtech.wgmall_backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.wgtech.wgmall_backend.entity.Product;
 
@@ -24,4 +26,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @return 商品列表
      */
     List<Product> findByPriceBetween(BigDecimal min, BigDecimal max);
+
+    // 随机查找某一类商品的前8个
+    @Query(value = "SELECT * FROM products WHERE type = :type ORDER BY RAND() LIMIT 8", nativeQuery = true)
+    List<Product> findRandomByType(@Param("type") String type);
+
+    // 随机查找所有商品的前8个
+    @Query(value = "SELECT * FROM products ORDER BY RAND() LIMIT 8", nativeQuery = true)
+    List<Product> findRandomAll();
 }

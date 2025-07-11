@@ -136,4 +136,20 @@ public class UserController {
         return Result.success(result);
     }
 
+    @PostMapping("/role/set")
+    @Operation(summary = "设置用户的买家或者卖家")
+    public Result<String> setBuyerOrSaler(@RequestParam Long userId,
+                                          @RequestParam int buyerOrSaler) {
+        int result = userService.setBuyerOrSaler(userId, buyerOrSaler);
+
+        String roleName;
+        switch (result) {
+            case 1: roleName = "买家"; break;
+            case 2: roleName = "卖家"; break;
+            default: roleName = "未知角色"; break;
+        }
+
+        return Result.success("成功设置为：" + roleName);
+    }
+
 }

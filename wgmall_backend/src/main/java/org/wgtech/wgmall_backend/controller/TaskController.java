@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.dto.TaskResponse;
+import org.wgtech.wgmall_backend.entity.Product;
 import org.wgtech.wgmall_backend.entity.TaskLogger;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.repository.UserRepository;
@@ -93,20 +94,24 @@ public class TaskController {
         userRepository.save(user);
         taskLoggerService.save(task);
 
+        Product product = task.getProduct();
+
         // 8. 构造并返回响应结果
         TaskResponse response = new TaskResponse(
                 task.getId(),
+                product.getFirstImagePath(),
+                product.getName(),
                 task.getProductId(),
                 task.getProductAmount(),
-                task.getDispatchType().name(),
-                true
+                task.getDispatchType().name()
         );
+
 
         return Result.success(response);
     }
 
     @PostMapping("/complete")
-    @Operation(summary = "完成任务（加返利）")
+    @Operation(summary = "完成任务按钮（加返利）")
     public Result<String> completeTask(@RequestParam Long taskId) {
         TaskLogger task = taskLoggerService.findById(taskId)
                 .orElse(null);
@@ -182,15 +187,45 @@ public class TaskController {
             return Result.failure("你没有未完成的任务");
         }
 
+        Product product = task.getProduct();
+
         TaskResponse response = new TaskResponse(
                 task.getId(),
+                product.getFirstImagePath(),
+                product.getName(),
                 task.getProductId(),
                 task.getProductAmount(),
-                task.getDispatchType().name(),
-                true
+                task.getDispatchType().name()
         );
 
         return Result.success(response);
     }
+
+    @GetMapping("/history")
+    @Operation(summary = "查询当前用户已完成任务记录（历史）")
+    public Result<List<TaskResponse>> getCompletedTasks(@RequestParam Long userId) {
+        List<TaskLogger> completedTasks = taskLoggerService.findCompletedTasksByUserId(userId);
+
+        if (completedTasks == null || completedTasks.isEmpty()) {
+            return Result.failure("你还没有完成的任务记录");
+        }
+
+        List<TaskResponse> responses = completedTasks.stream().map(task -> {
+            Product product = task.getProduct();
+
+            return new TaskResponse(
+                    task.getId(),
+                    product != null ? product.getFirstImagePath() : null,
+                    product != null ? product.getName() : null,
+                    task.getProductId(),
+                    task.getProductAmount(),
+                    task.getDispatchType().name()
+            );
+        }).toList();
+
+        return Result.success(responses);
+    }
+
+
 
 }

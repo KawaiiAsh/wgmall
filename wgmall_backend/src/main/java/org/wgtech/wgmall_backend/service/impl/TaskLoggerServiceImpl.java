@@ -136,5 +136,8 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
         return taskLoggerRepository.findFirstByUserIdAndTakenTrueAndCompletedFalseOrderByCreateTimeAsc(userId);
     }
 
-
+    @Override
+    public List<TaskLogger> findCompletedTasksByUserId(Long userId) {
+        return taskLoggerRepository.findByUserIdAndCompletedTrueOrderByCompleteTimeDesc(userId);
+    }
 }

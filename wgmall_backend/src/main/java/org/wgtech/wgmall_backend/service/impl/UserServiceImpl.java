@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.entity.User;
+import org.wgtech.wgmall_backend.entity.UserRedBad;
 import org.wgtech.wgmall_backend.repository.AdministratorRepository;
 import org.wgtech.wgmall_backend.repository.TaskLoggerRepository;
+import org.wgtech.wgmall_backend.repository.UserRedBadRepository;
 import org.wgtech.wgmall_backend.repository.UserRepository;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.InviteCodeGenerator;
@@ -36,6 +38,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private IpLocationDetector ipLocationDetector;
+
+    @Autowired
+    private UserRedBadRepository userRedBadRepository;
 
     /**
      * 用户注册
@@ -96,12 +101,30 @@ public class UserServiceImpl implements UserService {
                     .lastLoginTime(new Date())
                     .repeatIp(repeatIp)
                     .totalProfit(0.0)
+                    .buyerOrSaler(0)
                     .rebate(0.006) // 默认返利
+                    .redBagDrawCount(0)
+                    .redBagCount(0)
                     .build();
 
             // 6. 保存用户
             User savedUser = userRepository.save(newUser);
+
+            // 添加默认红包配置
+            UserRedBad redBad = UserRedBad.builder()
+                    .userId(savedUser.getId())
+                    .day1(10.0)
+                    .day2(20.0)
+                    .day3(30.0)
+                    .day4(40.0)
+                    .day5(50.0)
+                    .day6(60.0)
+                    .day7(70.0)
+                    .build();
+            userRedBadRepository.save(redBad);
+
             return Result.success(savedUser);
+
 
         } catch (Exception e) {
             return Result.failure("注册失败，系统错误");
@@ -258,6 +281,15 @@ public class UserServiceImpl implements UserService {
         LocalDateTime start = yesterday.atStartOfDay(); // 昨日 00:00
         LocalDateTime end = yesterday.atTime(LocalTime.MAX); // 昨日 23:59:59.999
         return taskLoggerRepository.calculateProfitBetween(userId, start, end);
+    }
+
+    @Override
+    public int setBuyerOrSaler(Long userId,int buyerOrSaler) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+        user.setBuyerOrSaler(buyerOrSaler);
+        userRepository.save(user);
+        return buyerOrSaler;
     }
 
 }

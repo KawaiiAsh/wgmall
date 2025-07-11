@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -156,4 +157,28 @@ public class ProductServiceImpl implements ProductService {
         productRepository.delete(product);
     }
 
+    @Override
+    public List<Product> getRandomProducts() {
+        List<Product> products = productRepository.findRandomAll();
+        return populateFirstImagePath(products);
+    }
+
+    @Override
+    public List<Product> getRandomProductsByType(Product.ProductType type) {
+        List<Product> products = productRepository.findRandomByType(type.name());
+        return populateFirstImagePath(products);
+    }
+
+    private List<Product> populateFirstImagePath(List<Product> products) {
+        for (Product product : products) {
+            List<ProductImage> images = product.getImages();
+            if (images != null && !images.isEmpty()) {
+                images.sort(Comparator.comparingInt(
+                        img -> img.getSortOrder() != null ? img.getSortOrder() : Integer.MAX_VALUE
+                ));
+                product.setFirstImagePath(images.get(0).getImagePath());
+            }
+        }
+        return products;
+    }
 }

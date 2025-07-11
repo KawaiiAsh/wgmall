@@ -4,13 +4,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.wgtech.wgmall_backend.entity.Product;
 import org.wgtech.wgmall_backend.service.ProductService;
 import org.wgtech.wgmall_backend.utils.Result;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -134,8 +134,15 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/debug")
-    public String debug() {
-        return "debug ok";
+    @GetMapping("/random")
+    @Operation(summary = "随机获取8个商品", description = "给用户主页用")
+    public ResponseEntity<List<Product>> getRandomProducts() {
+        return ResponseEntity.ok(productService.getRandomProducts());
+    }
+
+    @Operation(summary = "根据随机获取8个商品", description = "给用户在浏览标签下的商品时刷新用")
+    @GetMapping("/random/type")
+    public ResponseEntity<List<Product>> getRandomProductsByType(@RequestParam("type") Product.ProductType type) {
+        return ResponseEntity.ok(productService.getRandomProductsByType(type));
     }
 }

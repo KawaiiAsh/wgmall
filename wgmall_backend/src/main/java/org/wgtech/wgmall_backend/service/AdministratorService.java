@@ -11,4 +11,6 @@ public interface AdministratorService {
      */
     List<Administrator> getAllSales();
 
+    void banAdministrator(long id);
+
 }

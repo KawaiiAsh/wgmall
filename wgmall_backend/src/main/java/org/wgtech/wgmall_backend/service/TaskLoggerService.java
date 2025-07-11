@@ -51,4 +51,5 @@ public interface TaskLoggerService {
 
     Optional<TaskLogger> findPendingTaskByUserId(Long userId);
 
+    public List<TaskLogger> findCompletedTasksByUserId(Long userId);
 }

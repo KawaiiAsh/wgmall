@@ -7,6 +7,7 @@ import org.wgtech.wgmall_backend.repository.AdministratorRepository;
 import org.wgtech.wgmall_backend.service.AdministratorService;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 管理员服务实现类
@@ -27,5 +28,17 @@ public class AdministratorServiceImpl implements AdministratorService {
     @Override
     public List<Administrator> getAllSales() {
         return administratorRepository.findByRole(Administrator.Role.SALES);
+    }
+
+    @Override
+    public void banAdministrator(long id) {
+        Optional<Administrator> optionalAdmin = administratorRepository.findById(id);
+        if (optionalAdmin.isPresent()) {
+            Administrator admin = optionalAdmin.get();
+            admin.setBanned(true);  // 设置封禁
+            administratorRepository.save(admin);  // 更新数据库
+        } else {
+            throw new RuntimeException("管理员不存在，ID: " + id);
+        }
     }
 }

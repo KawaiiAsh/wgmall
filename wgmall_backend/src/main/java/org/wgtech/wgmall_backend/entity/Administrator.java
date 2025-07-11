@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Entity
 @Setter
 @Getter
@@ -39,7 +37,7 @@ import java.util.List;
 
     public enum Role {
         SALES,    // 业务员
-        MANAGER,  // 客服
-        ADMIN     // 管理员
+        SERVICE,  // 客服
+        BOSS     // 管理员
     }
 }
