@@ -1,11 +1,14 @@
 package org.wgtech.wgmall_backend.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.repository.AdministratorRepository;
 import org.wgtech.wgmall_backend.service.AdministratorService;
+import org.wgtech.wgmall_backend.utils.Result;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +46,17 @@ public class AdministratorServiceImpl implements AdministratorService {
     }
 
     @Override
+    public void unbanAdministrator(long id) {
+        Administrator admin = administratorRepository.findById(id)
+                .filter(a -> a.getRole().name().equalsIgnoreCase("SALES"))
+                .orElseThrow(() -> new RuntimeException("业务员不存在"));
+
+        admin.setBanned(false);
+        administratorRepository.save(admin);
+    }
+
+
+    @Override
     public Administrator createBoss(String username, String nickname, String password) {
         if (administratorRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("用户名已存在");
@@ -64,4 +78,25 @@ public class AdministratorServiceImpl implements AdministratorService {
     public List<Administrator> getAllBosses() {
         return administratorRepository.findByRole(Administrator.Role.BOSS);
     }
+
+    @Override
+    public Page<Administrator> getAllSalesDesc(int page, int size) {
+        return administratorRepository.findByRoleOrderByIdDesc(Administrator.Role.SALES, PageRequest.of(page, size));
+    }
+
+    @Override
+    public Page<Administrator> searchSalesByNickname(String keyword, int page, int size) {
+        return administratorRepository.findByRoleAndNicknameContainingIgnoreCaseOrderByIdDesc(
+                Administrator.Role.SALES, keyword, PageRequest.of(page, size));
+    }
+
+    @Override
+    public Result<Administrator> findSalesById(long id) {
+        Administrator admin = administratorRepository.findById(id)
+                .filter(a -> "SALES".equalsIgnoreCase(String.valueOf(a.getRole())))
+                .orElseThrow(() -> new RuntimeException("未找到该业务员"));
+
+        return Result.success(admin);
+    }
+
 }

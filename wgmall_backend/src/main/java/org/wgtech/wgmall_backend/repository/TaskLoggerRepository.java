@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.wgtech.wgmall_backend.entity.TaskLogger;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -50,9 +51,10 @@ public interface TaskLoggerRepository extends JpaRepository<TaskLogger, Long> {
             "FROM TaskLogger t JOIN User u ON t.userId = u.id " +
             "WHERE t.userId = :userId AND t.completed = true " +
             "AND t.completeTime BETWEEN :start AND :end")
-    double calculateProfitBetween(@Param("userId") Long userId,
-                                  @Param("start") LocalDateTime start,
-                                  @Param("end") LocalDateTime end);
+    BigDecimal calculateProfitBetween(@Param("userId") Long userId,
+                                      @Param("start") LocalDateTime start,
+                                      @Param("end") LocalDateTime end);
+
 
     Optional<TaskLogger> findFirstByUserIdAndTakenTrueAndCompletedFalseOrderByCreateTimeAsc(Long userId);
 

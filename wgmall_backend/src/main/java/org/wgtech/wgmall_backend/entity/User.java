@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -37,7 +38,10 @@ public class User {
     private String ip;                // IP
 
     @NotNull(message = "余额不能为空")  // 非空校验
-    private double balance;           // 余额
+    private BigDecimal balance;           // 余额
+
+    @NotNull(message = "不可用余额不能为0.00")
+    private BigDecimal  noneUsefulBalance; // 不可用余额
 
     @NotNull(message = "邀请码不能为空")  // 非空校验
     private String inviteCode;        // 邀码
@@ -85,7 +89,7 @@ public class User {
     @NotNull(message = "返点")
     private double rebate;              // 一级返点是0.006，二级返点是0.02，三级返点是0.06。
 
-    private double totalProfit; // 用户累计获得的利润
+    private BigDecimal totalProfit; // 用户累计获得的利润
 
     @NotNull(message = "买家还是卖家")
     private int buyerOrSaler; // 身份 0买家，1是卖家
@@ -121,7 +125,7 @@ public class User {
     private Address address;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> cartItems;
+    private List<Wishlist> wishlists;
 
 
 }

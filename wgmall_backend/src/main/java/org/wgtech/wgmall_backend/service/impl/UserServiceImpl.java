@@ -18,6 +18,8 @@ import org.wgtech.wgmall_backend.utils.IpLocationDetector;
 import org.wgtech.wgmall_backend.utils.Result;
 
 import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -94,7 +96,8 @@ public class UserServiceImpl implements UserService {
                     .ip(ip)
                     .orderCount(0)
                     .isBanned(false)
-                    .balance(0.0)
+                    .balance(BigDecimal.ZERO)
+                    .noneUsefulBalance(BigDecimal.ZERO)
                     .toggle(false)
                     .canWithdraw(false)
                     .appointmentStatus(false)
@@ -103,7 +106,7 @@ public class UserServiceImpl implements UserService {
                     .registerTime(new Date())
                     .lastLoginTime(new Date())
                     .repeatIp(repeatIp)
-                    .totalProfit(0.0)
+                    .totalProfit(BigDecimal.ZERO)
                     .buyerOrSaler(0)
                     .rebate(0.006) // 默认返利
                     .redBagDrawCount(0)
@@ -184,8 +187,12 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = optionalUser.get();
-        user.setBalance(user.getBalance() + amount);
+
+        // 修复：把 double 转换成 BigDecimal
+        BigDecimal added = BigDecimal.valueOf(amount);
+        user.setBalance(user.getBalance().add(added));
         userRepository.save(user);
+
         return Result.success(user);
     }
 
@@ -200,10 +207,19 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = optionalUser.get();
-        user.setBalance(user.getBalance() - amount);
+
+        // 修复：转换为 BigDecimal 并判断余额
+        BigDecimal subtract = BigDecimal.valueOf(amount);
+        if (user.getBalance().compareTo(subtract) < 0) {
+            return Result.failure("余额不足");
+        }
+
+        user.setBalance(user.getBalance().subtract(subtract));
         userRepository.save(user);
+
         return Result.success(user);
     }
+
 
     /**
      * 设置用户是否允许抢单
@@ -272,14 +288,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public double getTodayProfit(Long userId) {
+    public BigDecimal getTodayProfit(Long userId) {
         LocalDateTime start = LocalDate.now().atStartOfDay(); // 今日 00:00
         LocalDateTime end = LocalDateTime.now();
         return taskLoggerRepository.calculateProfitBetween(userId, start, end);
     }
 
     @Override
-    public double getYesterdayProfit(Long userId) {
+    public BigDecimal getYesterdayProfit(Long userId) {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         LocalDateTime start = yesterday.atStartOfDay(); // 昨日 00:00
         LocalDateTime end = yesterday.atTime(LocalTime.MAX); // 昨日 23:59:59.999
@@ -352,4 +368,19 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("用户不存在，ID: " + userId));
     }
+
+    @Override
+    public boolean changePasswordByUsername(String username, String newPassword) {
+        Optional<User> optionalUser = userRepository.findByUsername(username);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setPassword(newPassword);
+            userRepository.save(user);
+            return true;
+        }
+        return false;
+    }
+
+
+
 }

@@ -81,7 +81,7 @@ public class ProductServiceImpl implements ProductService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在：" + username));
 
-        BigDecimal balance = BigDecimal.valueOf(user.getBalance());
+        BigDecimal balance = user.getBalance(); // ✅ 直接用
         return productRepository.findByPriceLessThanEqual(balance);
     }
 
@@ -136,4 +136,25 @@ public class ProductServiceImpl implements ProductService {
         Collections.shuffle(all, new Random());
         return all.stream().limit(8).toList();
     }
+
+    public List<Product> searchProductsByKeyword(String keyword) {
+        // 精准匹配名称
+        List<Product> nameMatches = productRepository.findByNameIgnoreCase(keyword);
+        if (!nameMatches.isEmpty()) return nameMatches;
+
+        // 尝试匹配枚举类型
+        try {
+            Product.ProductType type = Product.ProductType.valueOf(keyword.toUpperCase());
+            List<Product> typeMatches = productRepository.findByType(type);
+            if (!typeMatches.isEmpty()) return typeMatches;
+        } catch (IllegalArgumentException ignored) {}
+
+        // 模糊匹配名称
+        List<Product> fuzzyMatches = productRepository.findByNameContainingIgnoreCase(keyword);
+        if (!fuzzyMatches.isEmpty()) return fuzzyMatches;
+
+        // 最后随机返回
+        return productRepository.findRandomProducts(20);
+    }
+
 }

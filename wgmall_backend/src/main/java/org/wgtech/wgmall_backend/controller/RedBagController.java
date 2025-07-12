@@ -8,6 +8,7 @@ import org.wgtech.wgmall_backend.entity.*;
 import org.wgtech.wgmall_backend.repository.*;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,7 +92,7 @@ public class RedBagController {
         // 更新用户数据
         user.setRedBagCount(currentDay);
         user.setRedBagDrawCount(user.getRedBagDrawCount() + 1);
-        user.setBalance(user.getBalance() + amount);
+        user.setBalance(user.getBalance().add(BigDecimal.valueOf(amount)));
         userRepository.save(user);
 
         // 添加领取记录

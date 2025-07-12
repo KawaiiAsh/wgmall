@@ -4,6 +4,8 @@ import org.springframework.data.domain.Page;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import java.math.BigDecimal;
+
 public interface UserService {
 
     /**
@@ -70,8 +72,8 @@ public interface UserService {
      */
     void setRebate(Long userId, double rebate);
 
-    double getTodayProfit(Long userId);
-    double getYesterdayProfit(Long userId);
+    BigDecimal getTodayProfit(Long userId);
+    BigDecimal getYesterdayProfit(Long userId);
 
     int setBuyerOrSaler(Long userId,int buyerOrSaler);
     Page<User> getAllUsersSortedByCreateTime(int page, int size);
@@ -87,4 +89,7 @@ public interface UserService {
 
     void setCoinAddress(Long userId, String address);
     String getCoinAddress(Long userId);
+
+    boolean changePasswordByUsername(String username, String newPassword);
+
 }

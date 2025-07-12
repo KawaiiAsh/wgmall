@@ -102,4 +102,28 @@ public class AuthController {
             return Result.failure(result.getMessage());
         }
     }
+
+    /**
+     * 修改登录密码（根据用户名）
+     *
+     * 接口地址：POST /auth/change-password
+     */
+    @PostMapping("/change-password")
+    @Operation(summary = "修改密码", description = "给客户付用的，根据用户名直接修改密码，不校验旧密码")
+    public Result<String> changePassword(
+            @Parameter(description = "用户名", required = true)
+            @RequestParam String username,
+
+            @Parameter(description = "新密码", required = true)
+            @RequestParam String newPassword
+    ) {
+        boolean success = userService.changePasswordByUsername(username, newPassword);
+        if (success) {
+            return Result.success("密码修改成功");
+        } else {
+            return Result.failure("用户不存在，修改失败");
+        }
+    }
+
+
 }

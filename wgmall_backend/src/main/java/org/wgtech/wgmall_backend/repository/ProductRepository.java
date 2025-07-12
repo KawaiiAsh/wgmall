@@ -36,4 +36,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // 随机查找所有商品的前8个
     @Query(value = "SELECT * FROM products ORDER BY RAND() LIMIT 8", nativeQuery = true)
     List<Product> findRandomAll();
+
+    // 1. 精准匹配名称
+    List<Product> findByNameIgnoreCase(String name);
+
+    // 3. 模糊匹配名称
+    List<Product> findByNameContainingIgnoreCase(String name);
+
+    // 4. 随机返回
+    @Query(value = "SELECT * FROM products ORDER BY RAND() LIMIT ?1", nativeQuery = true)
+    List<Product> findRandomProducts(int limit);
 }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.entity.User;
@@ -39,7 +40,7 @@ public class AdministratorController {
      */
     @PostMapping("/createsales")
     @Operation(
-            summary = "创建业务员账号",
+            summary = "创建业务员账号✅",
             description = "管理员调用此接口可创建一个新的业务员账号，包含用户名、昵称和密码。"
     )
     public Result<Administrator> createSalesperson(
@@ -68,21 +69,6 @@ public class AdministratorController {
     }
 
     /**
-     * 获取所有业务员账号
-     *
-     * 接口地址：GET /administrator/sales
-     * 查询系统中所有角色为 SALES 的管理员账号（即业务员列表）
-     *
-     * @return 所有业务员的列表封装在统一返回结构中
-     */
-    @GetMapping("/sales")
-    @Operation(summary = "获取所有业务员", description = "列出所有角色为SALES的管理员")
-    public Result<List<Administrator>> getAllSales() {
-        List<Administrator> sales = administratorService.getAllSales(); // 查询业务员列表
-        return Result.success(sales);  // 返回结果
-    }
-
-    /**
      * 封禁管理员账号
      *
      * 接口地址：POST /administrator/ban/{id}
@@ -92,7 +78,7 @@ public class AdministratorController {
      * @return 操作结果
      */
     @PostMapping("/bansales/{id}")
-    @Operation(summary = "封禁业务员账号", description = "将指定业务员账号的 isBanned 设置为 true")
+    @Operation(summary = "封禁业务员账号✅", description = "将指定业务员账号的 isBanned 设置为 true")
     public Result<Void> banAdministrator(@PathVariable int id) {
         try {
             administratorService.banAdministrator(id);
@@ -102,26 +88,14 @@ public class AdministratorController {
         }
     }
 
-    /**
-     * 创建管理员（BOSS）账号
-     */
-    @PostMapping("/createboss")
-    @Operation(summary = "创建管理员账号", description = "用于创建角色为BOSS的管理员账号")
-    public Result<Administrator> createBoss(
-            @RequestParam String username,
-            @RequestParam String nickname,
-            @RequestParam String password
-    ) {
+    @PostMapping("/unbansales/{id}")
+    @Operation(summary = "解封业务员账号✅", description = "将指定业务员账号的 isBanned 设置为 false")
+    public Result<Void> unbanAdministrator(@PathVariable int id) {
         try {
-            if (username.isBlank() || nickname.isBlank() || password.isBlank()) {
-                return Result.failure("用户名、密码、昵称不能为空");
-            }
-            Administrator boss = administratorService.createBoss(username, nickname, password);
-            return Result.success(boss);
-        } catch (IllegalArgumentException e) {
-            return Result.failure("创建失败：" + e.getMessage());
+            administratorService.unbanAdministrator(id);
+            return Result.success();
         } catch (Exception e) {
-            return Result.failure("系统异常：" + e.getMessage());
+            return Result.failure("解封失败：" + e.getMessage());
         }
     }
 
@@ -129,10 +103,36 @@ public class AdministratorController {
      * 查询所有管理员（BOSS）
      */
     @GetMapping("/bosses")
-    @Operation(summary = "获取所有管理员", description = "列出所有角色为BOSS的管理员账号")
+    @Operation(summary = "获取所有管理员✅", description = "列出所有角色为BOSS的管理员账号")
     public Result<List<Administrator>> getAllBosses() {
         List<Administrator> bosses = administratorService.getAllBosses();
         return Result.success(bosses);
+    }
+
+    @GetMapping("/sales/page")
+    @Operation(summary = "分页获取所有业务员✅", description = "按ID倒序分页获取")
+    public Result<Page<Administrator>> getSalesPageByIdDesc(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Administrator> result = administratorService.getAllSalesDesc(page, size);
+        return Result.success(result);
+    }
+
+
+    @GetMapping("/sales/search")
+    @Operation(summary = "根据昵称搜索业务员✅", description = "模糊查询 + 分页 + 倒序")
+    public Result<Page<Administrator>> searchSales(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Administrator> result = administratorService.searchSalesByNickname(keyword, page, size);
+        return Result.success(result);
+    }
+
+    @GetMapping("/sales/{id}")
+    @Operation(summary = "根据ID查找业务员✅", description = "返回指定业务员信息")
+    public Result<Administrator> findSalesById(@PathVariable long id) {
+        return administratorService.findSalesById(id);
     }
 
 }

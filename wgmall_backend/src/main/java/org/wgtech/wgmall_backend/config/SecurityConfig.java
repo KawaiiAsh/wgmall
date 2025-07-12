@@ -26,12 +26,11 @@ public class SecurityConfig {
         return http
                 .csrf().disable()
                 .authorizeHttpRequests()
-                .anyRequest().permitAll() // ✅ 放行所有请求
+                .anyRequest().permitAll()
                 .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 无状态
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .build(); // ✅ 不添加 jwtFilter
+                .build();
     }
 
     /**

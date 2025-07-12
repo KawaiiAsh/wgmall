@@ -1,6 +1,10 @@
 package org.wgtech.wgmall_backend.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.wgtech.wgmall_backend.entity.Administrator;
+import org.wgtech.wgmall_backend.utils.Result;
+
 import java.util.List;
 
 public interface AdministratorService {
@@ -12,9 +16,15 @@ public interface AdministratorService {
     List<Administrator> getAllSales();
 
     void banAdministrator(long id);
+    void unbanAdministrator(long id);
 
     Administrator createBoss(String username, String nickname, String password);
 
     List<Administrator> getAllBosses();
 
+    Page<Administrator> getAllSalesDesc(int page, int size);
+
+    Page<Administrator> searchSalesByNickname(String keyword, int page, int size);
+
+    Result<Administrator> findSalesById(long id);
 }

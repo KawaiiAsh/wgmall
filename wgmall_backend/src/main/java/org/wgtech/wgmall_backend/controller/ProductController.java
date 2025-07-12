@@ -145,4 +145,15 @@ public class ProductController {
     public ResponseEntity<List<Product>> getRandomProductsByType(@RequestParam("type") Product.ProductType type) {
         return ResponseEntity.ok(productService.getRandomProductsByType(type));
     }
+
+    @GetMapping("/search")
+    @Operation(summary = "关键词搜索商品", description = "根据名称或类型精准/模糊匹配，匹配不到就随机返回")
+    public Result<List<Product>> searchProducts(
+            @Parameter(description = "搜索关键词", required = true)
+            @RequestParam String keyword
+    ) {
+        List<Product> results = productService.searchProductsByKeyword(keyword);
+        return Result.success(results);
+    }
+
 }

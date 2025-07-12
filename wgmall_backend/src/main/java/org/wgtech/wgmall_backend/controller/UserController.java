@@ -10,6 +10,7 @@ import org.wgtech.wgmall_backend.repository.UserRepository;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -125,9 +126,10 @@ public class UserController {
     @GetMapping("/profit")
     @Operation(summary = "获取用户盈利统计")
     public Result<Map<String, Object>> getProfit(@RequestParam Long userId) {
-        double today = userService.getTodayProfit(userId);
-        double yesterday = userService.getYesterdayProfit(userId);
-        double total = userRepository.findById(userId).get().getTotalProfit();
+        BigDecimal today = userService.getTodayProfit(userId);
+        BigDecimal yesterday = userService.getYesterdayProfit(userId);
+        BigDecimal total = userRepository.findById(userId).get().getTotalProfit();
+
 
         Map<String, Object> result = new HashMap<>();
         result.put("today", today);

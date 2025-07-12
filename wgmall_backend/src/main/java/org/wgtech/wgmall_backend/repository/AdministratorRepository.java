@@ -1,5 +1,7 @@
 package org.wgtech.wgmall_backend.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.wgtech.wgmall_backend.entity.Administrator;
@@ -33,4 +35,15 @@ public interface AdministratorRepository extends JpaRepository<Administrator, Lo
 
     boolean existsByUsername(String username);
     boolean existsByNickname(String nickname);
+
+
+    // 查询所有业务员，按 ID 倒序，分页
+    Page<Administrator> findByRoleOrderByIdDesc(Administrator.Role role, Pageable pageable);
+
+    // 根据 nickname 模糊匹配业务员，按 ID 倒序，分页
+    Page<Administrator> findByRoleAndNicknameContainingIgnoreCaseOrderByIdDesc(
+            Administrator.Role role, String keyword, Pageable pageable);
+
+    Page<Administrator> findAllByRole(String role, Pageable pageable);
+
 }

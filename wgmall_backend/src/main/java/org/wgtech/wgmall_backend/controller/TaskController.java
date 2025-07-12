@@ -81,7 +81,7 @@ public class TaskController {
             task = taskLoggerService.publishRandomTask(
                     user.getId(),
                     user.getUsername(),
-                    BigDecimal.valueOf(user.getBalance())
+                    user.getBalance()
             );
 
             if (task == null) {
@@ -144,10 +144,10 @@ public class TaskController {
                 .multiply(BigDecimal.valueOf(rebateRate));
 
         // 累加用户总盈利
-        user.setTotalProfit(user.getTotalProfit() + rebateAmount.doubleValue());
+        user.setTotalProfit(user.getTotalProfit().add(rebateAmount));
 
         // 可选：发放到账户余额
-         user.setBalance(user.getBalance() + rebateAmount.doubleValue());
+        user.setBalance(user.getBalance().add(rebateAmount));
 
         // 保存更新
         taskLoggerService.save(task);
