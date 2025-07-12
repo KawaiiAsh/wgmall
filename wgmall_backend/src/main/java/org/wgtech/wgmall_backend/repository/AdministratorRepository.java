@@ -30,4 +30,7 @@ public interface AdministratorRepository extends JpaRepository<Administrator, Lo
      * @return 对应角色的管理员列表
      */
     List<Administrator> findByRole(Administrator.Role role);
+
+    boolean existsByUsername(String username);
+    boolean existsByNickname(String nickname);
 }

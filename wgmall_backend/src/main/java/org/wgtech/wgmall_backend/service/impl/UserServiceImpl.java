@@ -1,6 +1,8 @@
 package org.wgtech.wgmall_backend.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.wgtech.wgmall_backend.entity.Administrator;
@@ -15,6 +17,7 @@ import org.wgtech.wgmall_backend.utils.InviteCodeGenerator;
 import org.wgtech.wgmall_backend.utils.IpLocationDetector;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -292,4 +295,61 @@ public class UserServiceImpl implements UserService {
         return buyerOrSaler;
     }
 
+    @Override
+    public Page<User> getAllUsersSortedByCreateTime(int page, int size) {
+        return userRepository.findAllByOrderByRegisterTimeDesc(PageRequest.of(page, size));
+    }
+
+    @Override
+    public void setTronAddress(Long userId, String address) {
+        User user = getUserOrThrow(userId);
+        user.setTronWalletAddress(address);
+        userRepository.save(user);
+    }
+
+    @Override
+    public String getTronAddress(Long userId) {
+        return getUserOrThrow(userId).getTronWalletAddress();
+    }
+
+    @Override
+    public void setBtcAddress(Long userId, String address) {
+        User user = getUserOrThrow(userId);
+        user.setBitCoinWalletAddress(address);
+        userRepository.save(user);
+    }
+
+    @Override
+    public String getBtcAddress(Long userId) {
+        return getUserOrThrow(userId).getBitCoinWalletAddress();
+    }
+
+    @Override
+    public void setEthAddress(Long userId, String address) {
+        User user = getUserOrThrow(userId);
+        user.setEthWalletAddress(address);
+        userRepository.save(user);
+    }
+
+    @Override
+    public String getEthAddress(Long userId) {
+        return getUserOrThrow(userId).getEthWalletAddress();
+    }
+
+    @Override
+    public void setCoinAddress(Long userId, String address) {
+        User user = getUserOrThrow(userId);
+        user.setCoinWalletAddress(address);
+        userRepository.save(user);
+    }
+
+    @Override
+    public String getCoinAddress(Long userId) {
+        return getUserOrThrow(userId).getCoinWalletAddress();
+    }
+
+    private User getUserOrThrow(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在，ID: " + userId));
+    }
 }

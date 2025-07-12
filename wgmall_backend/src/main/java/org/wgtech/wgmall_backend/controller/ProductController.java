@@ -60,8 +60,8 @@ public class ProductController {
             @Parameter(description = "上传者昵称（默认为“业务员”）", required = false)
             @RequestParam(required = false) String uploader,
 
-            @Parameter(description = "商品图片数组（最多支持多张）", required = true)
-            @RequestParam("images") MultipartFile[] images
+            @Parameter(description = "商品图片", required = true)
+            @RequestParam("images") MultipartFile images
     ) {
         try {
             // 调用服务层创建商品
@@ -140,7 +140,7 @@ public class ProductController {
         return ResponseEntity.ok(productService.getRandomProducts());
     }
 
-    @Operation(summary = "根据随机获取8个商品", description = "给用户在浏览标签下的商品时刷新用")
+    @Operation(summary = "根据商品类型随机获取8个商品", description = "给用户在浏览标签下的商品时")
     @GetMapping("/random/type")
     public ResponseEntity<List<Product>> getRandomProductsByType(@RequestParam("type") Product.ProductType type) {
         return ResponseEntity.ok(productService.getRandomProductsByType(type));

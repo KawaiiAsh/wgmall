@@ -116,5 +116,12 @@ public class User {
     @NotNull(message = "用户的总抽奖数或者第几天")
     private int redBagCount;        // 红包领取次数or第几天
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", referencedColumnName = "id")
+    private Address address;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> cartItems;
+
 
 }

@@ -3,6 +3,7 @@ package org.wgtech.wgmall_backend.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.repository.UserRepository;
@@ -108,7 +109,7 @@ public class UserController {
      * @param rebate
      * @return
      */
-    @PutMapping("/setRebate")
+    @PutMapping("/set-rbate")
     @Operation(summary = "设置用户返点", description = "根据用户ID设置用户返点")
     public Result<String> setUserRebate(@RequestParam Long userId,
                                         @RequestParam double rebate) {
@@ -152,4 +153,67 @@ public class UserController {
         return Result.success("成功设置为：" + roleName);
     }
 
+    @GetMapping
+    @Operation(summary = "分页查询用户", description = "按注册时间倒序，默认每页10条")
+    public Result<Page<User>> getUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        // 限制最大每页100条，避免滥用
+        int safeSize = Math.min(pageSize, 100);
+        Page<User> users = userService.getAllUsersSortedByCreateTime(page, safeSize);
+        return Result.success(users);
+    }
+
+    @PutMapping("/tron/set")
+    @Operation(summary = "设置 Tron 地址")
+    public Result<Void> setTron(@RequestParam Long userId, @RequestParam String address) {
+        userService.setTronAddress(userId, address);
+        return Result.success();
+    }
+
+    @GetMapping("/tron/get")
+    @Operation(summary = "获取 Tron 地址")
+    public Result<String> getTron(@RequestParam Long userId) {
+        return Result.success(userService.getTronAddress(userId));
+    }
+
+    @PutMapping("/btc/set")
+    @Operation(summary = "设置 BTC 地址")
+    public Result<Void> setBtc(@RequestParam Long userId, @RequestParam String address) {
+        userService.setBtcAddress(userId, address);
+        return Result.success();
+    }
+
+    @GetMapping("/btc/get")
+    @Operation(summary = "获取 BTC 地址")
+    public Result<String> getBtc(@RequestParam Long userId) {
+        return Result.success(userService.getBtcAddress(userId));
+    }
+
+    @PutMapping("/eth/set")
+    @Operation(summary = "设置 ETH 地址")
+    public Result<Void> setEth(@RequestParam Long userId, @RequestParam String address) {
+        userService.setEthAddress(userId, address);
+        return Result.success();
+    }
+
+    @GetMapping("/eth/get")
+    @Operation(summary = "获取 ETH 地址")
+    public Result<String> getEth(@RequestParam Long userId) {
+        return Result.success(userService.getEthAddress(userId));
+    }
+
+    @PutMapping("/coin/set")
+    @Operation(summary = "设置 Coin 地址")
+    public Result<Void> setCoin(@RequestParam Long userId, @RequestParam String address) {
+        userService.setCoinAddress(userId, address);
+        return Result.success();
+    }
+
+    @GetMapping("/coin/get")
+    @Operation(summary = "获取 Coin 地址")
+    public Result<String> getCoin(@RequestParam Long userId) {
+        return Result.success(userService.getCoinAddress(userId));
+    }
 }

@@ -13,4 +13,8 @@ public interface AdministratorService {
 
     void banAdministrator(long id);
 
+    Administrator createBoss(String username, String nickname, String password);
+
+    List<Administrator> getAllBosses();
+
 }

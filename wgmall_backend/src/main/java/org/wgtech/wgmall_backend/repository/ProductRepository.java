@@ -27,6 +27,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      */
     List<Product> findByPriceBetween(BigDecimal min, BigDecimal max);
 
+    List<Product> findByType(Product.ProductType type);
+
     // 随机查找某一类商品的前8个
     @Query(value = "SELECT * FROM products WHERE type = :type ORDER BY RAND() LIMIT 8", nativeQuery = true)
     List<Product> findRandomByType(@Param("type") String type);

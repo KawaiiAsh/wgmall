@@ -1,5 +1,6 @@
 package org.wgtech.wgmall_backend.service;
 
+import org.springframework.data.domain.Page;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.utils.Result;
 
@@ -73,5 +74,17 @@ public interface UserService {
     double getYesterdayProfit(Long userId);
 
     int setBuyerOrSaler(Long userId,int buyerOrSaler);
+    Page<User> getAllUsersSortedByCreateTime(int page, int size);
 
+    void setTronAddress(Long userId, String address);
+    String getTronAddress(Long userId);
+
+    void setBtcAddress(Long userId, String address);
+    String getBtcAddress(Long userId);
+
+    void setEthAddress(Long userId, String address);
+    String getEthAddress(Long userId);
+
+    void setCoinAddress(Long userId, String address);
+    String getCoinAddress(Long userId);
 }

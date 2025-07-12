@@ -99,7 +99,7 @@ public class TaskController {
         // 8. 构造并返回响应结果
         TaskResponse response = new TaskResponse(
                 task.getId(),
-                product.getFirstImagePath(),
+                product.getImagePath(),
                 product.getName(),
                 task.getProductId(),
                 task.getProductAmount(),
@@ -191,7 +191,7 @@ public class TaskController {
 
         TaskResponse response = new TaskResponse(
                 task.getId(),
-                product.getFirstImagePath(),
+                product.getImagePath(),
                 product.getName(),
                 task.getProductId(),
                 task.getProductAmount(),
@@ -215,7 +215,7 @@ public class TaskController {
 
             return new TaskResponse(
                     task.getId(),
-                    product != null ? product.getFirstImagePath() : null,
+                    product != null ? product.getImagePath() : null,
                     product != null ? product.getName() : null,
                     task.getProductId(),
                     task.getProductAmount(),

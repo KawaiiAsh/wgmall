@@ -101,4 +101,38 @@ public class AdministratorController {
             return Result.failure("封禁失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 创建管理员（BOSS）账号
+     */
+    @PostMapping("/createboss")
+    @Operation(summary = "创建管理员账号", description = "用于创建角色为BOSS的管理员账号")
+    public Result<Administrator> createBoss(
+            @RequestParam String username,
+            @RequestParam String nickname,
+            @RequestParam String password
+    ) {
+        try {
+            if (username.isBlank() || nickname.isBlank() || password.isBlank()) {
+                return Result.failure("用户名、密码、昵称不能为空");
+            }
+            Administrator boss = administratorService.createBoss(username, nickname, password);
+            return Result.success(boss);
+        } catch (IllegalArgumentException e) {
+            return Result.failure("创建失败：" + e.getMessage());
+        } catch (Exception e) {
+            return Result.failure("系统异常：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 查询所有管理员（BOSS）
+     */
+    @GetMapping("/bosses")
+    @Operation(summary = "获取所有管理员", description = "列出所有角色为BOSS的管理员账号")
+    public Result<List<Administrator>> getAllBosses() {
+        List<Administrator> bosses = administratorService.getAllBosses();
+        return Result.success(bosses);
+    }
+
 }

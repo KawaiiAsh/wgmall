@@ -15,10 +15,10 @@ import lombok.Setter;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // 自动生成ID
-    private int id;
+    private long id;
 
     @Enumerated(EnumType.STRING)  // 枚举类型映射到数据库中的字符串
-    private Role role;  // 业务员SALES、主管MANAGER、管理员ADMIN
+    private Role role;  // 业务员SALES、管理员BOSS
 
     @Column(nullable = false, unique = true)
     private String username;  // 账号
@@ -37,7 +37,6 @@ import lombok.Setter;
 
     public enum Role {
         SALES,    // 业务员
-        SERVICE,  // 客服
         BOSS     // 管理员
     }
 }

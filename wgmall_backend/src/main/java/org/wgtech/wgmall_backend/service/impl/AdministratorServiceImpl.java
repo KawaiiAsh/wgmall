@@ -41,4 +41,27 @@ public class AdministratorServiceImpl implements AdministratorService {
             throw new RuntimeException("管理员不存在，ID: " + id);
         }
     }
+
+    @Override
+    public Administrator createBoss(String username, String nickname, String password) {
+        if (administratorRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("用户名已存在");
+        }
+        if (administratorRepository.existsByNickname(nickname)) {
+            throw new IllegalArgumentException("昵称已存在");
+        }
+
+        Administrator boss = new Administrator();
+        boss.setUsername(username);
+        boss.setNickname(nickname);
+        boss.setPassword(password); // 实际项目建议加密
+        boss.setRole(Administrator.Role.BOSS);
+        boss.setBanned(false);
+        return administratorRepository.save(boss);
+    }
+
+    @Override
+    public List<Administrator> getAllBosses() {
+        return administratorRepository.findByRole(Administrator.Role.BOSS);
+    }
 }

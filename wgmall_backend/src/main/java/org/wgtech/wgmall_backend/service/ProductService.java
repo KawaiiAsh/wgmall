@@ -17,12 +17,12 @@ public interface ProductService {
      * @param sales 销量
      * @param type 商品类型（枚举）
      * @param uploader 上传人用户名
-     * @param images 图片文件数组
+     * @param image 图片文件
      * @return 创建成功的商品对象
      * @throws IOException 上传图片失败
      */
     Product createProduct(String name, BigDecimal price, Integer stock,
-                          Integer sales, String type, String uploader, MultipartFile[] images) throws IOException;
+                          Integer sales, String type, String uploader, MultipartFile image) throws IOException;
 
     /**
      * 获取当前用户余额范围内可购买的商品

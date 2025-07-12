@@ -56,12 +56,8 @@ public class Product {
 
     private String uploader;  // 上架人（默认是“业务员”）
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    @JsonManagedReference // 与上面配对使用
-    private List<ProductImage> images;  // 商品轮播图
-
-    @Transient
-    private String firstImagePath; // 不保存进数据库
+    @NotNull(message = "图片路径不能为空")
+    private String imagePath;
 
     @PrePersist
     public void setDefaultUploader() {
