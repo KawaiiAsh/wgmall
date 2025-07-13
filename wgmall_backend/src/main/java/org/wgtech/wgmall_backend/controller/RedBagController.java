@@ -34,7 +34,7 @@ public class RedBagController {
     // 1. 用户签到（仅标记状态）
     // ================================
     @PostMapping("/signin/{userId}")
-    @Operation(summary = "签到")
+    @Operation(summary = "签到✅")
     public Result<String> signIn(@PathVariable Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) return Result.failure("用户不存在");
@@ -53,7 +53,7 @@ public class RedBagController {
     // 2. 用户领取红包接口
     // ================================
     @PostMapping("/draw/{userId}")
-    @Operation(summary = "领取红包")
+    @Operation(summary = "领取红包✅")
     public Result<String> drawRedBag(@PathVariable Long userId) {
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isEmpty()) return Result.failure("用户不存在");
@@ -73,26 +73,29 @@ public class RedBagController {
             if (hours < 24) return Result.failure("每24小时只能领取一次红包");
         }
 
+        // 限制领取次数为 7 次
         if (user.getRedBagCount() >= 7) return Result.failure("您已领取完7天红包");
 
         int currentDay = user.getRedBagCount() + 1;
 
         Optional<UserRedBad> configOpt = userRedBadRepository.findByUserId(userId);
-        double amount = switch (currentDay) {
-            case 1 -> configOpt.map(UserRedBad::getDay1).orElse(10.0);
-            case 2 -> configOpt.map(UserRedBad::getDay2).orElse(20.0);
-            case 3 -> configOpt.map(UserRedBad::getDay3).orElse(30.0);
-            case 4 -> configOpt.map(UserRedBad::getDay4).orElse(40.0);
-            case 5 -> configOpt.map(UserRedBad::getDay5).orElse(50.0);
-            case 6 -> configOpt.map(UserRedBad::getDay6).orElse(60.0);
-            case 7 -> configOpt.map(UserRedBad::getDay7).orElse(70.0);
-            default -> currentDay * 10.0;
+
+        // 使用 BigDecimal 代替 double
+        BigDecimal amount = switch (currentDay) {
+            case 1 -> new BigDecimal(configOpt.map(UserRedBad::getDay1).orElse(10.0));
+            case 2 -> new BigDecimal(configOpt.map(UserRedBad::getDay2).orElse(20.0));
+            case 3 -> new BigDecimal(configOpt.map(UserRedBad::getDay3).orElse(30.0));
+            case 4 -> new BigDecimal(configOpt.map(UserRedBad::getDay4).orElse(40.0));
+            case 5 -> new BigDecimal(configOpt.map(UserRedBad::getDay5).orElse(50.0));
+            case 6 -> new BigDecimal(configOpt.map(UserRedBad::getDay6).orElse(60.0));
+            case 7 -> new BigDecimal(configOpt.map(UserRedBad::getDay7).orElse(70.0));
+            default -> new BigDecimal(currentDay * 10.0);
         };
 
         // 更新用户数据
         user.setRedBagCount(currentDay);
         user.setRedBagDrawCount(user.getRedBagDrawCount() + 1);
-        user.setBalance(user.getBalance().add(BigDecimal.valueOf(amount)));
+        user.setBalance(user.getBalance().add(amount));
         userRepository.save(user);
 
         // 添加领取记录
@@ -106,8 +109,12 @@ public class RedBagController {
         // ✅ 领取成功后清除签到状态
         signedInToday.remove(userId);
 
-        return Result.success("领取成功，第 " + currentDay + " 天，获得红包 " + amount + " 元");
+        // 格式化金额为两位小数
+        String formattedAmount = String.format("%.2f", amount);
+
+        return Result.success("领取成功，第 " + currentDay + " 天，获得红包 " + formattedAmount + " 元");
     }
+
 
 
     // ================================
@@ -116,7 +123,7 @@ public class RedBagController {
 
     // 设置某个用户的7天红包金额
     @PutMapping("/user-config/{userId}")
-    @Operation(summary = "设置用户七天红包")
+    @Operation(summary = "设置用户七天红包✅")
     public Result<UserRedBad> setUserRedBag(@PathVariable Long userId, @RequestBody UserRedBad input) {
         input.setUserId(userId);
         Optional<UserRedBad> existing = userRedBadRepository.findByUserId(userId);
@@ -139,7 +146,7 @@ public class RedBagController {
 
     // 查询某个用户的红包配置
     @GetMapping("/user-config/{userId}")
-    @Operation(summary = "根据id查询用户的红包金额")
+    @Operation(summary = "根据id查询用户的红包金额✅")
     public Result<UserRedBad> getUserRedBag(@PathVariable Long userId) {
         return userRedBadRepository.findByUserId(userId)
                 .map(Result::success)

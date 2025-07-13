@@ -99,4 +99,28 @@ public class AdministratorServiceImpl implements AdministratorService {
         return Result.success(admin);
     }
 
+    @Override
+    public Result<Administrator> loginAdmin(String username, String password) {
+        // 查找管理员
+        Optional<Administrator> adminOpt = administratorRepository.findByUsername(username);
+
+        if (!adminOpt.isPresent()) {
+            return Result.failure("账号不存在");
+        }
+
+        Administrator admin = adminOpt.get();
+
+        // 校验密码，实际生产环境应使用加密后的密码比对
+        if (!admin.getPassword().equals(password)) {
+            return Result.failure("密码错误");
+        }
+
+        // 检查是否被禁用
+        if (admin.isBanned()) {
+            return Result.failure("该账号已被禁用");
+        }
+
+        return Result.success(admin);
+    }
+
 }

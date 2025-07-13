@@ -27,4 +27,6 @@ public interface AdministratorService {
     Page<Administrator> searchSalesByNickname(String keyword, int page, int size);
 
     Result<Administrator> findSalesById(long id);
+
+    Result<Administrator> loginAdmin(String username, String password);
 }
