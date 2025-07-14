@@ -54,7 +54,8 @@ public class AuthController {
 
         if (result.getCode() == 200) {
             User user = result.getData();
-            String token = JwtUtils.generateToken(user.getUsername());
+            String role = user.getBuyerOrSaler() == 0 ? "ROLE_BUYER" : "ROLE_SALER";
+            String token = JwtUtils.generateToken(user.getUsername(), role, "USER");
 
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
@@ -80,7 +81,8 @@ public class AuthController {
 
         if (result.getCode() == 200) {
             User user = result.getData();
-            String token = JwtUtils.generateToken(user.getUsername());
+            String role = user.getBuyerOrSaler() == 0 ? "ROLE_BUYER" : "ROLE_SALER";
+            String token = JwtUtils.generateToken(user.getUsername(), role, "USER");
 
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
@@ -90,6 +92,7 @@ public class AuthController {
             return Result.failure(result.getMessage());
         }
     }
+
 
 
 
@@ -111,13 +114,14 @@ public class AuthController {
 
 
     @PostMapping("/login-admin")
-    @Operation(summary = "业务员和客服的登录接口✅", description = "给客服和业务员专用登录接口")
+    @Operation(summary = "业务员登录", description = "给业务员的专用登录接口")
     public Result<Map<String, Object>> loginAdmin(@RequestBody AdminLoginRequest req) {
         Result<Administrator> result = administratorService.loginAdmin(req.getUsername(), req.getPassword());
 
         if (result.getCode() == 200) {
             Administrator admin = result.getData();
-            String token = JwtUtils.generateToken(admin.getUsername());
+            String role = "ROLE_" + admin.getRole().name(); // ROLE_SALES
+            String token = JwtUtils.generateToken(admin.getUsername(), role, "ADMINISTRATOR");
 
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
@@ -128,5 +132,24 @@ public class AuthController {
         }
     }
 
+
+    @PostMapping("/login-boss")
+    @Operation(summary = "客服登录", description = "给客服的专用登录接口")
+    public Result<Map<String, Object>> loginBoss(@RequestBody AdminLoginRequest req) {
+        Result<Administrator> result = administratorService.loginAdmin(req.getUsername(), req.getPassword());
+
+        if (result.getCode() == 200) {
+            Administrator admin = result.getData();
+            String role = "ROLE_" + admin.getRole().name(); // ROLE_BOSS
+            String token = JwtUtils.generateToken(admin.getUsername(), role, "ADMINISTRATOR");
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("token", token);
+            data.put("admin", admin);
+            return Result.success(data);
+        } else {
+            return Result.failure(result.getMessage());
+        }
+    }
 
 }

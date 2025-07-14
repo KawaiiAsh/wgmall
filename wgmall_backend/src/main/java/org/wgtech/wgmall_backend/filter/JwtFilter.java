@@ -3,6 +3,7 @@ package org.wgtech.wgmall_backend.filter;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -11,6 +12,7 @@ import org.wgtech.wgmall_backend.utils.JwtUtils;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtFilter extends GenericFilter {
@@ -24,7 +26,6 @@ public class JwtFilter extends GenericFilter {
 
         String path = httpRequest.getRequestURI();
 
-        // ✅ 路径白名单：直接放行，不走 token 校验
         if (path.startsWith("/auth/")
                 || path.startsWith("/swagger")
                 || path.startsWith("/v3")
@@ -35,7 +36,6 @@ public class JwtFilter extends GenericFilter {
             return;
         }
 
-        // ✅ token 校验流程
         String authHeader = httpRequest.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -43,8 +43,11 @@ public class JwtFilter extends GenericFilter {
                 String jwt = authHeader.substring(7);
                 if (JwtUtils.validateToken(jwt)) {
                     String username = JwtUtils.getUsernameFromToken(jwt);
+                    String role = JwtUtils.getRoleFromToken(jwt); // e.g. ROLE_BUYER
+
                     UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                            new UsernamePasswordAuthenticationToken(username, null,
+                                    List.of(new SimpleGrantedAuthority(role)));
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     chain.doFilter(request, response);
@@ -61,5 +64,4 @@ public class JwtFilter extends GenericFilter {
             httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing JWT token");
         }
     }
-
 }
