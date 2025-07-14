@@ -24,9 +24,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         return http
+                .cors() // 👈 添加这一行，启用 CORS 支持
+                .and()
                 .csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers(    "/auth/login",
+                .requestMatchers(
+                        "/auth/login",
                         "/auth/register",
                         "/auth/login-admin",
                         "/v3/api-docs/**",
@@ -35,14 +38,15 @@ public class SecurityConfig {
                         "/webjars/**",
                         "/uploads/products/**",
                         "/products/random",
-                        "/products/type").permitAll() // 允许匿名访问登录/注册接口
-                .anyRequest().authenticated() // 其他所有接口都需要认证
+                        "/products/type").permitAll()
+                .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) // 加入 JWT 过滤器
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
 
     /**
