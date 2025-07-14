@@ -100,10 +100,10 @@ public class AuthController {
     @Operation(summary = "修改密码✅", description = "给客服修改密码用的，根据用户名直接修改密码，不校验旧密码")
     public Result<String> changePassword(
             @Parameter(description = "用户名", required = true)
-            @RequestParam String username,
+            @RequestBody String username,
 
             @Parameter(description = "新密码", required = true)
-            @RequestParam String new_password
+            @RequestBody String new_password
     ) {
         boolean success = userService.changePasswordByUsername(username, new_password);
         if (success) {
@@ -116,8 +116,8 @@ public class AuthController {
     @PostMapping("/login-admin")
     @Operation(summary = "业务员和客服的登录接口✅", description = "给客服和业务员专用登录接口")
     public Result<Map<String, Object>> loginAdmin(
-            @RequestParam String username,
-            @RequestParam String password
+            @RequestBody String username,
+            @RequestBody String password
     ) {
         Result<Administrator> result = administratorService.loginAdmin(username, password);
 
