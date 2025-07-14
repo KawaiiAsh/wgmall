@@ -25,10 +25,4 @@ logging:
 
 # 服务器配置
 server:
-  port: 8443
-  ssl:
-    enabled: true
-    key-store: classpath:keystore.p12
-    key-store-password: 123456   # 换成你实际设的密码
-    key-store-type: PKCS12
-    key-alias: myssl             # 和你创建证书时输入的 alias 一致
+  port: 8080
