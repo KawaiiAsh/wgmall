@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.wgtech.wgmall_backend.dto.RegisterRequest;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.service.AdministratorService;
@@ -38,15 +39,15 @@ public class AuthController {
      */
     @PostMapping("/register")
     @Operation(summary = "用户注册✅", description = "根据用户名、手机号、密码、邀请码等信息注册新用户，成功返回 token")
-    public Result<Map<String, Object>> register(
-            @RequestBody  String username,
-            @RequestBody  String phone,
-            @RequestBody  String password,
-            @RequestBody  String invitecode,
-            @RequestBody  String fundpassword,
-            @RequestBody  String ip
-    ) {
-        Result<User> result = userService.registerUser(username, phone, password, invitecode, fundpassword, ip);
+    public Result<Map<String, Object>> register(@RequestBody RegisterRequest req) {
+        Result<User> result = userService.registerUser(
+                req.getUsername(),
+                req.getPhone(),
+                req.getPassword(),
+                req.getInvitecode(),
+                req.getFundpassword(),
+                req.getIp()
+        );
 
         if (result.getCode() == 200) {
             User user = result.getData();
