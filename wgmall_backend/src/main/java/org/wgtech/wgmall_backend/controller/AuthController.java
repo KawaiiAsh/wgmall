@@ -60,6 +60,7 @@ public class AuthController {
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
             data.put("user", user);
+            data.put("identity", role);  // 返回角色标识（BUYER 或 SELLER）
             return Result.success(data);
         } else {
             return Result.failure(result.getMessage());
