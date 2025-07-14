@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://mysql.railway.internal:3306/railway?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://hopper.proxy.rlwy.net:44435/railway
     username: root
     password: YmaBpaOCvqLOcrYExdfsTahfiAzTLGhb
     driver-class-name: com.mysql.cj.jdbc.Driver
