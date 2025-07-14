@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
+import org.wgtech.wgmall_backend.dto.CreateSalesRequest;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.service.AdministratorService;
@@ -33,40 +34,27 @@ public class AdministratorController {
      * 接口地址：POST /administrator/createsales
      * 管理员通过此接口创建业务员账号，传入用户名、昵称和密码。
      *
-     * @param username 用户名，必须唯一
-     * @param nickname 业务员昵称
-     * @param password 登录密码
      * @return 操作结果，包含成功时返回的业务员信息或失败提示
      */
     @PostMapping("/createsales")
-    @Operation(
-            summary = "创建业务员账号✅",
-            description = "管理员调用此接口可创建一个新的业务员账号，包含用户名、昵称和密码。"
-    )
+    @Operation(summary = "创建业务员账号✅")
     public Result<Administrator> createSalesperson(
-            @Parameter(description = "用户名（唯一）", required = true)
-            @RequestParam String username,
-
-            @Parameter(description = "业务员昵称", required = true)
-            @RequestParam String nickname,
-
-            @Parameter(description = "登录密码", required = true)
-            @RequestParam String password
+            @RequestBody CreateSalesRequest request
     ) {
-        try {
-            // 校验逻辑（可选）：空值、长度等
-            if (username.isBlank() || password.isBlank() || nickname.isBlank()) {
-                return Result.failure("用户名、密码、昵称不能为空");
-            }
-
-            Administrator admin = salespersonCreator.createSalesperson(username, nickname, password);
-            return Result.success(admin);
-        } catch (IllegalArgumentException ex) {
-            return Result.custom(400, "参数非法：" + ex.getMessage(), null);
-        } catch (Exception e) {
-            return Result.failure("创建业务员失败：" + e.getMessage());
+        if (request.getUsername().isBlank() ||
+                request.getPassword().isBlank() ||
+                request.getNickname().isBlank()) {
+            return Result.failure("用户名、密码、昵称不能为空");
         }
+
+        Administrator admin = salespersonCreator.createSalesperson(
+                request.getUsername(),
+                request.getNickname(),
+                request.getPassword()
+        );
+        return Result.success(admin);
     }
+
 
     /**
      * 封禁管理员账号

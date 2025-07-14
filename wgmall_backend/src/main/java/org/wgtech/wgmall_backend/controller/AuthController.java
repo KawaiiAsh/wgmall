@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.wgtech.wgmall_backend.dto.AdminLoginRequest;
+import org.wgtech.wgmall_backend.dto.ChangePasswordRequest;
 import org.wgtech.wgmall_backend.dto.LoginRequest;
 import org.wgtech.wgmall_backend.dto.RegisterRequest;
 import org.wgtech.wgmall_backend.entity.Administrator;
@@ -98,14 +100,8 @@ public class AuthController {
      */
     @PostMapping("/change-password")
     @Operation(summary = "修改密码✅", description = "给客服修改密码用的，根据用户名直接修改密码，不校验旧密码")
-    public Result<String> changePassword(
-            @Parameter(description = "用户名", required = true)
-            @RequestBody String username,
-
-            @Parameter(description = "新密码", required = true)
-            @RequestBody String new_password
-    ) {
-        boolean success = userService.changePasswordByUsername(username, new_password);
+    public Result<String> changePassword(@RequestBody ChangePasswordRequest req) {
+        boolean success = userService.changePasswordByUsername(req.getUsername(), req.getNewPassword());
         if (success) {
             return Result.success("密码修改成功");
         } else {
@@ -113,18 +109,14 @@ public class AuthController {
         }
     }
 
+
     @PostMapping("/login-admin")
     @Operation(summary = "业务员和客服的登录接口✅", description = "给客服和业务员专用登录接口")
-    public Result<Map<String, Object>> loginAdmin(
-            @RequestBody String username,
-            @RequestBody String password
-    ) {
-        Result<Administrator> result = administratorService.loginAdmin(username, password);
+    public Result<Map<String, Object>> loginAdmin(@RequestBody AdminLoginRequest req) {
+        Result<Administrator> result = administratorService.loginAdmin(req.getUsername(), req.getPassword());
 
         if (result.getCode() == 200) {
             Administrator admin = result.getData();
-
-            // 注意这里的 token 也可以根据角色加点标识（如管理员前缀），这里就简单用用户名生成
             String token = JwtUtils.generateToken(admin.getUsername());
 
             Map<String, Object> data = new HashMap<>();
