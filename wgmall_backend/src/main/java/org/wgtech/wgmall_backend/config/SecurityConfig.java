@@ -33,7 +33,9 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/webjars/**",
-                        "/uploads/products/**").permitAll() // 允许匿名访问登录/注册接口
+                        "/uploads/products/**",
+                        "/products/random",
+                        "/products/type").permitAll() // 允许匿名访问登录/注册接口
                 .anyRequest().authenticated() // 其他所有接口都需要认证
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
