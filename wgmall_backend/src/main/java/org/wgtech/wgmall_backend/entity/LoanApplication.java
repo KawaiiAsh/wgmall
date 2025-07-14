@@ -82,11 +82,10 @@ public class LoanApplication {
     private boolean agreementConfirmed; // 确认协议
 
     @NotNull
-    private String username;           // 用户名
-
-    @NotNull
-    private Long userId;               // 用户 ID
-
-    @NotNull
     private String superiorNickname;           // 上级 nickname
+
+    // 添加与 User 的一对一关系
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private User user; // 与 User 一对多关系
 }

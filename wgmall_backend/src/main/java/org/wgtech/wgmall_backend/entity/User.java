@@ -127,5 +127,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Wishlist> wishlists;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private LoanApplication loanApplication;  // 用户的贷款申请
 
 }

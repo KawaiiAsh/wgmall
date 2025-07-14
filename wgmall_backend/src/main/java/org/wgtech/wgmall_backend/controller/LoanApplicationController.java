@@ -32,20 +32,15 @@ public class LoanApplicationController {
     public Result<LoanApplication> applyLoan(@RequestBody LoanApplication loanApplication) {
         try {
             // 获取用户信息
-            User user = userRepository.findByUsername(loanApplication.getUsername())
+            User user = userRepository.findById(loanApplication.getUser().getId())
                     .orElseThrow(() -> new IllegalArgumentException("用户未找到"));
 
-            // 设置用户ID
-            loanApplication.setUserId(user.getId());
-
             // 获取上级用户的昵称
-            String superiorNickname = user.getSuperiorUsername();  // 上级用户名（昵称）
+            String superiorNickname = user.getSuperiorUsername();
+            loanApplication.setSuperiorNickname(superiorNickname != null ? superiorNickname : "无上级");
 
-            if (superiorNickname != null) {
-                loanApplication.setSuperiorNickname(superiorNickname);
-            } else {
-                loanApplication.setSuperiorNickname("无上级");  // 如果没有上级昵称，设置为"无上级"
-            }
+            // 设置用户对象
+            loanApplication.setUser(user);
 
             // 提交贷款申请
             LoanApplication submittedLoan = loanApplicationService.submitLoanApplication(loanApplication);
@@ -56,4 +51,6 @@ public class LoanApplicationController {
             return Result.failure("贷款申请失败: " + e.getMessage());
         }
     }
+
+
 }
