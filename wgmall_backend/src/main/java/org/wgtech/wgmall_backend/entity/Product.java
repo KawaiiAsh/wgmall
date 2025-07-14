@@ -19,9 +19,9 @@ import java.util.List;
 public class Product {
 
     public enum ProductType {
-        WOMEN_CLOTHING,//女衣服
+        WOMEN,//女衣服
         WOMEN_SHOES,//女鞋
-        MENS_CLOTHING,//男衣服
+        MENS,//男衣服
         MENS_SHOES,//男鞋
         HOME_GOODS,//家具
         JEWELRY_WATCHES,//手表
