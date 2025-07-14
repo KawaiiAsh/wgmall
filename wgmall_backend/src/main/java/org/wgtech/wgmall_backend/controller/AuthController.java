@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.wgtech.wgmall_backend.dto.LoginRequest;
 import org.wgtech.wgmall_backend.dto.RegisterRequest;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.entity.User;
@@ -72,11 +73,8 @@ public class AuthController {
      */
     @PostMapping("/login")
     @Operation(summary = "用户登录✅", description = "通过用户名或手机号 + 密码进行登录，返回Token")
-    public Result<Map<String, Object>> login(
-            @RequestBody  String username_or_phone,
-            @RequestBody  String password
-    ) {
-        Result<User> result = userService.loginUser(username_or_phone, password);
+    public Result<Map<String, Object>> login(@RequestBody LoginRequest req) {
+        Result<User> result = userService.loginUser(req.getUsername_or_phone(), req.getPassword());
 
         if (result.getCode() == 200) {
             User user = result.getData();
@@ -90,6 +88,7 @@ public class AuthController {
             return Result.failure(result.getMessage());
         }
     }
+
 
 
     /**
