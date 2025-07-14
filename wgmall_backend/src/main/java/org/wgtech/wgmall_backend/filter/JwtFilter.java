@@ -24,16 +24,22 @@ public class JwtFilter extends GenericFilter {
 
         String path = httpRequest.getRequestURI();
 
-        // 路径白名单：跳过 token 校验
-        if (path.startsWith("/auth/") || path.startsWith("/swagger") || path.startsWith("/v3")) {
+        // ✅ 路径白名单：直接放行，不走 token 校验
+        if (path.startsWith("/auth/")
+                || path.startsWith("/swagger")
+                || path.startsWith("/v3")
+                || path.startsWith("/webjars")
+                || path.startsWith("/uploads")
+                || path.startsWith("/products")) {
             chain.doFilter(request, response);
             return;
         }
 
+        // ✅ token 校验流程
         String authHeader = httpRequest.getHeader("Authorization");
 
-        try {
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
                 String jwt = authHeader.substring(7);
                 if (JwtUtils.validateToken(jwt)) {
                     String username = JwtUtils.getUsernameFromToken(jwt);
@@ -41,22 +47,18 @@ public class JwtFilter extends GenericFilter {
                             new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    chain.doFilter(request, response);
+                    return;
                 } else {
                     httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
                     return;
                 }
-            } else {
-                // 没 token 也拒绝
-                httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing JWT token");
+            } catch (Exception e) {
+                httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token parsing failed");
                 return;
             }
-
-            chain.doFilter(request, response);
-
-        } catch (Exception e) {
-            if (!httpResponse.isCommitted()) {
-                httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token validation failed");
-            }
+        } else {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing JWT token");
         }
     }
 
