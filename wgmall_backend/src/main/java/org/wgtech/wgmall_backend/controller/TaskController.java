@@ -17,9 +17,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 任务控制器 - 实现刷单流程中涉及的任务分发与领取
- */
 @RestController
 @RequestMapping("/task")
 @Tag(name = "刷单流程接口", description = "实现刷单所需要的接口")
@@ -34,50 +31,42 @@ public class TaskController {
     @Autowired
     TaskLoggerService taskLoggerService;
 
-    /**
-     * 用户执行抢单（仅支持预约派单 + 随机派单）
-     */
     @PostMapping("/grab")
     @Operation(summary = "执行抢单")
     public Result<TaskResponse> grabTask(@RequestParam Long userId) {
-
-        // 1. 判断是否还有未完成的任务
         if (grabTaskService.hasComplete(userId)) {
             return Result.failure("你还有未完成的任务，请先完成后再抢单");
         }
 
-        // 2. 检查是否允许继续抢单（如并发抢单限制）
         if (!grabTaskService.hasGrabPermission(userId)) {
             return Result.failure("抢单人数过多，过于繁忙");
         }
 
-        // 3. 检查用户剩余抢单次数
         if (grabTaskService.getRemainingGrabTimes(userId) <= 0) {
             return Result.failure("你的抢单数量不够");
         }
 
-        // 4. 查询用户信息
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
         TaskLogger task = null;
 
-        // 5. 优先预约派单（支持多个预约任务）
         if (user.isAppointmentStatus()
                 && user.getOrderCount() == user.getAppointmentNumber()) {
 
             List<TaskLogger> reservedTasks = taskLoggerService.findUnTakenReservedTasks(userId);
+            if (reservedTasks.isEmpty()) {
+                return Result.failure("暂无可领取的预约任务");
+            }
 
-            task = reservedTasks.get(0); // 默认领取最早的一个
+            task = reservedTasks.get(0);
             task.setTaken(true);
 
-            // ✅ 如果所有预约任务都已完成，清除预约状态
             if (taskLoggerService.countUnCompletedReservedTasks(userId) == 0) {
                 user.setAppointmentStatus(false);
             }
 
         } else {
-            // 6. 随机派单
             task = taskLoggerService.publishRandomTask(
                     user.getId(),
                     user.getUsername(),
@@ -89,14 +78,14 @@ public class TaskController {
             }
         }
 
-        // 7. 更新用户状态与任务状态
+        // 抢单成功后立即扣除金额（允许负数）
         user.setOrderCount(user.getOrderCount() - 1);
+        user.setBalance(user.getBalance().subtract(task.getProductAmount()));
         userRepository.save(user);
         taskLoggerService.save(task);
 
         Product product = task.getProduct();
 
-        // 8. 构造并返回响应结果
         TaskResponse response = new TaskResponse(
                 task.getId(),
                 product.getImagePath(),
@@ -105,7 +94,6 @@ public class TaskController {
                 task.getProductAmount(),
                 task.getDispatchType().name()
         );
-
 
         return Result.success(response);
     }
@@ -124,43 +112,35 @@ public class TaskController {
             return Result.failure("任务已完成，不能重复提交");
         }
 
-        // 获取用户（已确认用户一定存在）
-        User user = userRepository.findById(task.getUserId()).get();
+        User user = userRepository.findById(task.getUserId())
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
 
-        // 标记任务为完成
         task.setCompleted(true);
-        task.setCompleteTime(LocalDateTime.now()); //  记录完成时间
+        task.setCompleteTime(LocalDateTime.now());
+        taskLoggerService.save(task); // 先保存再判断状态
 
-        // ✅ 根据任务类型选择返利比例
-        double rebateRate;
-        if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED) {
-            rebateRate = task.getRebate(); // 来自业务员设定
-        } else {
-            rebateRate = user.getRebate(); // 用户自己的返利比例
-        }
+        double rebateRate = (task.getDispatchType() == TaskLogger.DispatchType.RESERVED)
+                ? task.getRebate()
+                : user.getRebate();
 
-        // 计算返利金额：商品金额 × 返利比例
         BigDecimal rebateAmount = task.getProductAmount()
                 .multiply(BigDecimal.valueOf(rebateRate));
 
-        // 累加用户总盈利
+        user.setBalance(user.getBalance().add(rebateAmount));
         user.setTotalProfit(user.getTotalProfit().add(rebateAmount));
 
-        // 可选：发放到账户余额
-        user.setBalance(user.getBalance().add(rebateAmount));
+        if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED) {
+            int remaining = taskLoggerService.countUnCompletedReservedTasks(user.getId());
+            if (remaining == 0) {
+                user.setAppointmentStatus(false);
+            }
+        }
 
-        // 保存更新
-        taskLoggerService.save(task);
         userRepository.save(user);
 
-        return Result.success("任务已完成，返利：" + rebateAmount);
+        return Result.success("任务完成，返利：" + rebateAmount + "，当前余额：" + user.getBalance());
     }
 
-
-    /**
-     * 管理员发布“预约派单”任务
-     * 用户满足预约条件（如数量）后才可抢
-     */
     @PostMapping("/reserve")
     @Operation(summary = "管理员发布预约派单任务")
     public Result<String> reserveTask(
@@ -225,7 +205,4 @@ public class TaskController {
 
         return Result.success(responses);
     }
-
-
-
 }
