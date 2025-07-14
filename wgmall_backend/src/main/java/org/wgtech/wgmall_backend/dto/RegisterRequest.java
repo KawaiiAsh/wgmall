@@ -14,7 +14,4 @@ public class RegisterRequest {
     private String invitecode;
     private String fundpassword;
     private String ip;
-
-    // ✅ 一定要写 getter/setter（Lombok @Data 也可以）
-    // 省略 getter/setter 示例...
 }
