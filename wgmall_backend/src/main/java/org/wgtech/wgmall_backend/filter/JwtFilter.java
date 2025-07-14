@@ -22,6 +22,14 @@ public class JwtFilter extends GenericFilter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
+        String path = httpRequest.getRequestURI();
+
+        // 路径白名单：跳过 token 校验
+        if (path.startsWith("/auth/") || path.startsWith("/swagger") || path.startsWith("/v3")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = httpRequest.getHeader("Authorization");
 
         try {
@@ -34,19 +42,22 @@ public class JwtFilter extends GenericFilter {
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 } else {
-                    // token 无效，返回 401，终止链条
                     httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
                     return;
                 }
+            } else {
+                // 没 token 也拒绝
+                httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing JWT token");
+                return;
             }
-            // 放行
+
             chain.doFilter(request, response);
 
         } catch (Exception e) {
-            // 避免多次写 response
             if (!httpResponse.isCommitted()) {
                 httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token validation failed");
             }
         }
     }
+
 }
