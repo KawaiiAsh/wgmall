@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.wgtech.wgmall_backend.dto.ProductUploadRequest;
 import org.wgtech.wgmall_backend.entity.Product;
 import org.wgtech.wgmall_backend.service.ProductService;
 import org.wgtech.wgmall_backend.utils.Result;
@@ -39,41 +40,29 @@ public class ProductController {
      * @param images 商品图片数组（支持多张上传）
      * @return 添加成功返回商品信息，失败返回错误提示
      */
-    @PostMapping("/add")
-    @Operation(summary = "添加商品", description = "上传商品信息及多张图片，图片自动保存在本地")
+    @PostMapping(value = "/add", consumes = "multipart/form-data")
+    @Operation(summary = "添加商品", description = "上传商品信息及多张图片")
     public Result<Product> addProduct(
-            @Parameter(description = "商品名称", required = true)
-            @RequestParam String name,
-
-            @Parameter(description = "商品价格", required = true)
-            @RequestParam BigDecimal price,
-
-            @Parameter(description = "库存数量", required = true)
-            @RequestParam Integer stock,
-
-            @Parameter(description = "初始销量", required = true)
-            @RequestParam Integer sales,
-
-            @Parameter(description = "商品类型（枚举值如：ELECTRONICS、FOOD）", required = true)
-            @RequestParam String type,
-
-            @Parameter(description = "上传者昵称（默认为“业务员”）", required = false)
-            @RequestParam(required = false) String uploader,
-
-            @Parameter(description = "商品图片", required = true)
-            @RequestParam("images") MultipartFile images
+            @RequestPart("product") ProductUploadRequest productDto,
+            @RequestPart("images") MultipartFile images
     ) {
         try {
-            // 调用服务层创建商品
             Product product = productService.createProduct(
-                    name, price, stock, sales, type, uploader, images
+                    productDto.getName(),
+                    productDto.getPrice(),
+                    productDto.getStock(),
+                    productDto.getSales(),
+                    productDto.getType(),
+                    productDto.getUploader(),
+                    images
             );
             return Result.success(product);
         } catch (Exception e) {
-            e.printStackTrace(); // 记录异常信息
+            e.printStackTrace();
             return Result.failure("添加商品失败: " + e.getMessage());
         }
     }
+
 
     /**
      * 获取某用户“可购买”的商品列表（价格 <= 用户余额）

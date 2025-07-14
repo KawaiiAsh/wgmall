@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.wgtech.wgmall_backend.dto.TaskResponse;
+import org.wgtech.wgmall_backend.dto.*;
 import org.wgtech.wgmall_backend.entity.Product;
 import org.wgtech.wgmall_backend.entity.TaskLogger;
 import org.wgtech.wgmall_backend.entity.User;
@@ -33,15 +33,14 @@ public class TaskController {
 
     @PostMapping("/grab")
     @Operation(summary = "执行抢单")
-    public Result<TaskResponse> grabTask(@RequestParam Long userId) {
+    public Result<TaskResponse> grabTask(@RequestBody GrabTaskRequest request) {
+        Long userId = request.getUserId();
         if (grabTaskService.hasComplete(userId)) {
             return Result.failure("你还有未完成的任务，请先完成后再抢单");
         }
-
         if (!grabTaskService.hasGrabPermission(userId)) {
             return Result.failure("抢单人数过多，过于繁忙");
         }
-
         if (grabTaskService.getRemainingGrabTimes(userId) <= 0) {
             return Result.failure("你的抢单数量不够");
         }
@@ -49,16 +48,14 @@ public class TaskController {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
-        TaskLogger task = null;
+        TaskLogger task;
 
         if (user.isAppointmentStatus()
                 && user.getOrderCount() == user.getAppointmentNumber()) {
-
             List<TaskLogger> reservedTasks = taskLoggerService.findUnTakenReservedTasks(userId);
             if (reservedTasks.isEmpty()) {
                 return Result.failure("暂无可领取的预约任务");
             }
-
             task = reservedTasks.get(0);
             task.setTaken(true);
 
@@ -72,20 +69,17 @@ public class TaskController {
                     user.getUsername(),
                     user.getBalance()
             );
-
             if (task == null) {
                 return Result.failure("暂无适合您余额的商品，无法派发任务");
             }
         }
 
-        // 抢单成功后立即扣除金额（允许负数）
         user.setOrderCount(user.getOrderCount() - 1);
         user.setBalance(user.getBalance().subtract(task.getProductAmount()));
         userRepository.save(user);
         taskLoggerService.save(task);
 
         Product product = task.getProduct();
-
         TaskResponse response = new TaskResponse(
                 task.getId(),
                 product.getImagePath(),
@@ -100,14 +94,12 @@ public class TaskController {
 
     @PostMapping("/complete")
     @Operation(summary = "完成任务按钮（加返利）")
-    public Result<String> completeTask(@RequestParam Long taskId) {
-        TaskLogger task = taskLoggerService.findById(taskId)
+    public Result<String> completeTask(@RequestBody CompleteTaskRequest request) {
+        TaskLogger task = taskLoggerService.findById(request.getTaskId())
                 .orElse(null);
-
         if (task == null) {
             return Result.failure("任务不存在");
         }
-
         if (Boolean.TRUE.equals(task.getCompleted())) {
             return Result.failure("任务已完成，不能重复提交");
         }
@@ -117,7 +109,7 @@ public class TaskController {
 
         task.setCompleted(true);
         task.setCompleteTime(LocalDateTime.now());
-        taskLoggerService.save(task); // 先保存再判断状态
+        taskLoggerService.save(task);
 
         double rebateRate = (task.getDispatchType() == TaskLogger.DispatchType.RESERVED)
                 ? task.getRebate()
@@ -130,8 +122,7 @@ public class TaskController {
         user.setTotalProfit(user.getTotalProfit().add(rebateAmount));
 
         if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED) {
-            int remaining = taskLoggerService.countUnCompletedReservedTasks(user.getId());
-            if (remaining == 0) {
+            if (taskLoggerService.countUnCompletedReservedTasks(user.getId()) == 0) {
                 user.setAppointmentStatus(false);
             }
         }
@@ -143,24 +134,22 @@ public class TaskController {
 
     @PostMapping("/reserve")
     @Operation(summary = "管理员发布预约派单任务")
-    public Result<String> reserveTask(
-            @RequestParam Long userId,
-            @RequestParam String username,
-            @RequestParam Long productId,
-            @RequestParam BigDecimal productAmount,
-            @RequestParam Double commissionRate,
-            @RequestParam String dispatcher
-    ) {
+    public Result<String> reserveTask(@RequestBody ReserveTaskRequest request) {
         boolean success = taskLoggerService.publishReservedTask(
-                userId, username, productId, productAmount, commissionRate, dispatcher
+                request.getUserId(),
+                request.getUsername(),
+                request.getProductId(),
+                request.getProductAmount(),
+                request.getCommissionRate(),
+                request.getDispatcher()
         );
         return success ? Result.success("预约任务发布成功") : Result.failure("预约任务发布失败");
     }
 
-    @GetMapping("/pending")
+    @PostMapping("/pending")
     @Operation(summary = "查询当前用户未完成任务（购物车）")
-    public Result<TaskResponse> getPendingTask(@RequestParam Long userId) {
-        TaskLogger task = taskLoggerService.findPendingTaskByUserId(userId)
+    public Result<TaskResponse> getPendingTask(@RequestBody UserRequest request) {
+        TaskLogger task = taskLoggerService.findPendingTaskByUserId(request.getUserId())
                 .orElse(null);
 
         if (task == null) {
@@ -168,7 +157,6 @@ public class TaskController {
         }
 
         Product product = task.getProduct();
-
         TaskResponse response = new TaskResponse(
                 task.getId(),
                 product.getImagePath(),
@@ -181,10 +169,10 @@ public class TaskController {
         return Result.success(response);
     }
 
-    @GetMapping("/history")
+    @PostMapping("/history")
     @Operation(summary = "查询当前用户已完成任务记录（历史）")
-    public Result<List<TaskResponse>> getCompletedTasks(@RequestParam Long userId) {
-        List<TaskLogger> completedTasks = taskLoggerService.findCompletedTasksByUserId(userId);
+    public Result<List<TaskResponse>> getCompletedTasks(@RequestBody UserRequest request) {
+        List<TaskLogger> completedTasks = taskLoggerService.findCompletedTasksByUserId(request.getUserId());
 
         if (completedTasks == null || completedTasks.isEmpty()) {
             return Result.failure("你还没有完成的任务记录");
@@ -192,7 +180,6 @@ public class TaskController {
 
         List<TaskResponse> responses = completedTasks.stream().map(task -> {
             Product product = task.getProduct();
-
             return new TaskResponse(
                     task.getId(),
                     product != null ? product.getImagePath() : null,
