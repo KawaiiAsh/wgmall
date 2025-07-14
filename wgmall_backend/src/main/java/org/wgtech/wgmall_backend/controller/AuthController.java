@@ -39,12 +39,12 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "用户注册✅", description = "根据用户名、手机号、密码、邀请码等信息注册新用户，成功返回 token")
     public Result<Map<String, Object>> register(
-            @RequestParam String username,
-            @RequestParam String phone,
-            @RequestParam String password,
-            @RequestParam String invitecode,
-            @RequestParam String fundpassword,
-            @RequestParam String ip
+            @RequestBody  String username,
+            @RequestBody  String phone,
+            @RequestBody  String password,
+            @RequestBody  String invitecode,
+            @RequestBody  String fundpassword,
+            @RequestBody  String ip
     ) {
         Result<User> result = userService.registerUser(username, phone, password, invitecode, fundpassword, ip);
 
@@ -72,8 +72,8 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "用户登录✅", description = "通过用户名或手机号 + 密码进行登录，返回Token")
     public Result<Map<String, Object>> login(
-            @RequestParam String username_or_phone,
-            @RequestParam String password
+            @RequestBody  String username_or_phone,
+            @RequestBody  String password
     ) {
         Result<User> result = userService.loginUser(username_or_phone, password);
 
