@@ -41,7 +41,7 @@ public class ProductController {
      * @return 添加成功返回商品信息，失败返回错误提示
      */
     @PostMapping(value = "/add", consumes = "multipart/form-data")
-    @Operation(summary = "添加商品", description = "上传商品信息及多张图片")
+    @Operation(summary = "添加商品（身份“BOSS”的权限）", description = "上传商品信息及多张图片")
     public Result<Product> addProduct(
             @RequestPart("product") ProductUploadRequest productDto,
             @RequestPart("images") MultipartFile images
@@ -89,7 +89,7 @@ public class ProductController {
      * @return 返回在指定价格区间内的商品列表
      */
     @GetMapping("/price-range")
-    @Operation(summary = "获取指定价格范围商品", description = "查询商品价格在[min, max]范围内的商品列表")
+    @Operation(summary = "获取指定价格范围商品（身份“SALES，BOSS“的权限）", description = "查询商品价格在[min, max]范围内的商品列表")
     public List<Product> getProductsByPriceRange(
             @Parameter(description = "最低价格", required = true)
             @RequestParam BigDecimal min,
@@ -109,7 +109,7 @@ public class ProductController {
      * @return 删除成功或失败的信息
      */
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除商品", description = "根据商品ID彻底删除商品及其图片资源")
+    @Operation(summary = "删除商品（身份“BOSS”的权限）", description = "根据商品ID彻底删除商品及其图片资源")
     public Result<String> deleteProduct(
             @Parameter(description = "商品ID", required = true)
             @PathVariable Long id
@@ -124,19 +124,19 @@ public class ProductController {
     }
 
     @GetMapping("/random")
-    @Operation(summary = "随机获取8个商品", description = "给用户主页用")
+    @Operation(summary = "随机获取8个商品（所有人）", description = "给用户主页用")
     public ResponseEntity<List<Product>> getRandomProducts() {
         return ResponseEntity.ok(productService.getRandomProducts());
     }
 
-    @Operation(summary = "根据商品类型随机获取8个商品", description = "给用户在浏览标签下的商品时")
+    @Operation(summary = "根据商品类型随机获取8个商品（所有人）", description = "给用户在浏览标签下的商品时")
     @GetMapping("/random/type")
     public ResponseEntity<List<Product>> getRandomProductsByType(@RequestParam("type") Product.ProductType type) {
         return ResponseEntity.ok(productService.getRandomProductsByType(type));
     }
 
     @GetMapping("/search")
-    @Operation(summary = "关键词搜索商品", description = "根据名称或类型精准/模糊匹配，匹配不到就随机返回")
+    @Operation(summary = "关键词搜索商品（用户）", description = "根据名称或类型精准/模糊匹配，匹配不到就随机返回")
     public Result<List<Product>> searchProducts(
             @Parameter(description = "搜索关键词", required = true)
             @RequestParam String keyword

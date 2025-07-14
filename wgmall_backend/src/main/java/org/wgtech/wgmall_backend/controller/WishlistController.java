@@ -20,7 +20,7 @@ public class WishlistController {
     private final WishlistService wishlistService;
 
     @GetMapping("/{userId}")
-    @Operation(summary = "查询心愿单", description = "获取指定用户的心愿单内容")
+    @Operation(summary = "查询心愿单（用户）", description = "获取指定用户的心愿单内容")
     public Result<List<Wishlist>> getCart(
             @Parameter(description = "用户ID", required = true)
             @PathVariable Long userId) {
@@ -29,7 +29,7 @@ public class WishlistController {
     }
 
     @PostMapping("/add")
-    @Operation(summary = "加入心愿单", description = "一次加入一个商品，如果心愿单已满5件则添加失败")
+    @Operation(summary = "加入心愿单（用户）", description = "一次加入一个商品，如果心愿单已满5件则添加失败")
     public Result<Wishlist> addToCart(
             @Parameter(description = "用户ID", required = true)
             @RequestParam Long userId,
@@ -44,7 +44,7 @@ public class WishlistController {
     }
 
     @DeleteMapping("/delete")
-    @Operation(summary = "批量删除心愿单项", description = "通过心愿单项ID列表删除，支持多选")
+    @Operation(summary = "批量删除心愿单项（用户）", description = "通过心愿单项ID列表删除，支持多选")
     public Result<Void> deleteItems(
             @Parameter(description = "用户ID", required = true)
             @RequestParam Long userId,

@@ -41,7 +41,7 @@ public class AuthController {
      * @return 注册成功提示或失败原因
      */
     @PostMapping("/register")
-    @Operation(summary = "用户注册✅", description = "根据用户名、手机号、密码、邀请码等信息注册新用户，成功返回 token")
+    @Operation(summary = "用户注册", description = "根据用户名、手机号、密码、邀请码等信息注册新用户，成功返回 token")
     public Result<Map<String, Object>> register(@RequestBody RegisterRequest req) {
         Result<User> result = userService.registerUser(
                 req.getUsername(),
@@ -75,7 +75,7 @@ public class AuthController {
      * @return 登录结果，包含 token 和用户信息，或失败信息
      */
     @PostMapping("/login")
-    @Operation(summary = "用户登录✅", description = "通过用户名或手机号 + 密码进行登录，返回Token")
+    @Operation(summary = "用户登录", description = "通过用户名或手机号 + 密码进行登录，返回Token")
     public Result<Map<String, Object>> login(@RequestBody LoginRequest req) {
         Result<User> result = userService.loginUser(req.getUsername_or_phone(), req.getPassword());
 
@@ -109,7 +109,7 @@ public class AuthController {
      * 接口地址：POST /auth/change-password
      */
     @PostMapping("/change-password")
-    @Operation(summary = "修改密码✅", description = "给客服修改密码用的，根据用户名直接修改密码，不校验旧密码")
+    @Operation(summary = "修改密码（身份“BOSS”的权限）", description = "给客服修改密码用的，根据用户名直接修改密码，不校验旧密码")
     public Result<String> changePassword(@RequestBody ChangePasswordRequest req) {
         boolean success = userService.changePasswordByUsername(req.getUsername(), req.getNewPassword());
         if (success) {

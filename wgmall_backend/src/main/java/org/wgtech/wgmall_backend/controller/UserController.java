@@ -111,7 +111,7 @@ public class UserController {
      * @return
      */
     @PutMapping("/set-rbate")
-    @Operation(summary = "设置用户返点", description = "根据用户ID设置用户返点")
+    @Operation(summary = "设置用户返点（身份“SALES，BOSS“的权限）", description = "根据用户ID设置用户返点")
     public Result<String> setUserRebate(@RequestParam Long userId,
                                         @RequestParam double rebate) {
 
@@ -124,7 +124,7 @@ public class UserController {
     }
 
     @GetMapping("/profit")
-    @Operation(summary = "获取用户盈利统计")
+    @Operation(summary = "获取用户盈利统计（身份“BUYER，SALER“的权限）")
     public Result<Map<String, Object>> getProfit(@RequestParam Long userId) {
         BigDecimal today = userService.getTodayProfit(userId);
         BigDecimal yesterday = userService.getYesterdayProfit(userId);
@@ -140,7 +140,7 @@ public class UserController {
     }
 
     @PostMapping("/role/set")
-    @Operation(summary = "设置用户的买家或者卖家")
+    @Operation(summary = "设置用户的买家或者卖家（身份“SALES，BOSS“的权限）")
     public Result<String> setBuyerOrSaler(@RequestParam Long userId,
                                           @RequestParam int buyerOrSaler) {
         int result = userService.setBuyerOrSaler(userId, buyerOrSaler);
@@ -156,7 +156,7 @@ public class UserController {
     }
 
     @GetMapping
-    @Operation(summary = "分页查询用户", description = "按注册时间倒序，默认每页10条")
+    @Operation(summary = "分页查询用户（身份“SALES，BOSS“的权限）", description = "按注册时间倒序，默认每页10条")
     public Result<Page<User>> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int pageSize
@@ -168,53 +168,53 @@ public class UserController {
     }
 
     @PutMapping("/tron/set")
-    @Operation(summary = "设置 Tron 地址")
+    @Operation(summary = "设置 Tron 地址（用户）")
     public Result<Void> setTron(@RequestParam Long userId, @RequestParam String address) {
         userService.setTronAddress(userId, address);
         return Result.success();
     }
 
     @GetMapping("/tron/get")
-    @Operation(summary = "获取 Tron 地址")
+    @Operation(summary = "获取 Tron 地址（所有人）")
     public Result<String> getTron(@RequestParam Long userId) {
         return Result.success(userService.getTronAddress(userId));
     }
 
     @PutMapping("/btc/set")
-    @Operation(summary = "设置 BTC 地址")
+    @Operation(summary = "设置 BTC 地址（用户）")
     public Result<Void> setBtc(@RequestParam Long userId, @RequestParam String address) {
         userService.setBtcAddress(userId, address);
         return Result.success();
     }
 
     @GetMapping("/btc/get")
-    @Operation(summary = "获取 BTC 地址")
+    @Operation(summary = "获取 BTC 地址（所有人）")
     public Result<String> getBtc(@RequestParam Long userId) {
         return Result.success(userService.getBtcAddress(userId));
     }
 
     @PutMapping("/eth/set")
-    @Operation(summary = "设置 ETH 地址")
+    @Operation(summary = "设置 ETH 地址（用户）")
     public Result<Void> setEth(@RequestParam Long userId, @RequestParam String address) {
         userService.setEthAddress(userId, address);
         return Result.success();
     }
 
     @GetMapping("/eth/get")
-    @Operation(summary = "获取 ETH 地址")
+    @Operation(summary = "获取 ETH 地址（所有人）")
     public Result<String> getEth(@RequestParam Long userId) {
         return Result.success(userService.getEthAddress(userId));
     }
 
     @PutMapping("/coin/set")
-    @Operation(summary = "设置 Coin 地址")
+    @Operation(summary = "设置 Coin 地址（用户）")
     public Result<Void> setCoin(@RequestParam Long userId, @RequestParam String address) {
         userService.setCoinAddress(userId, address);
         return Result.success();
     }
 
     @GetMapping("/coin/get")
-    @Operation(summary = "获取 Coin 地址")
+    @Operation(summary = "获取 Coin 地址（所有人）")
     public Result<String> getCoin(@RequestParam Long userId) {
         return Result.success(userService.getCoinAddress(userId));
     }

@@ -118,7 +118,7 @@ public class AdministratorController {
     }
 
     @GetMapping("/sales/{id}")
-    @Operation(summary = "根据ID查找业务员（身份”BOSS的权限“）", description = "返回指定业务员信息")
+    @Operation(summary = "根据ID查找业务员（身份”BOSS“的权限“）", description = "返回指定业务员信息")
     public Result<Administrator> findSalesById(@PathVariable long id) {
         return administratorService.findSalesById(id);
     }

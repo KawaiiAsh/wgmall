@@ -34,7 +34,7 @@ public class RedBagController {
     // 1. 用户签到（仅标记状态）
     // ================================
     @PostMapping("/signin/{userId}")
-    @Operation(summary = "签到✅")
+    @Operation(summary = "签到（用户）")
     public Result<String> signIn(@PathVariable Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) return Result.failure("用户不存在");
@@ -53,7 +53,7 @@ public class RedBagController {
     // 2. 用户领取红包接口
     // ================================
     @PostMapping("/draw/{userId}")
-    @Operation(summary = "领取红包✅")
+    @Operation(summary = "领取红包（用户）")
     public Result<String> drawRedBag(@PathVariable Long userId) {
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isEmpty()) return Result.failure("用户不存在");
@@ -123,7 +123,7 @@ public class RedBagController {
 
     // 设置某个用户的7天红包金额
     @PutMapping("/user-config/{userId}")
-    @Operation(summary = "设置用户七天红包✅")
+    @Operation(summary = "设置用户七天红包（身份“SALES，BOSS“的权限）")
     public Result<UserRedBad> setUserRedBag(@PathVariable Long userId, @RequestBody UserRedBad input) {
         input.setUserId(userId);
         Optional<UserRedBad> existing = userRedBadRepository.findByUserId(userId);
@@ -146,7 +146,7 @@ public class RedBagController {
 
     // 查询某个用户的红包配置
     @GetMapping("/user-config/{userId}")
-    @Operation(summary = "根据id查询用户的红包金额✅")
+    @Operation(summary = "根据id查询用户的红包金额（身份“SALES，BOSS“的权限）")
     public Result<UserRedBad> getUserRedBag(@PathVariable Long userId) {
         return userRedBadRepository.findByUserId(userId)
                 .map(Result::success)

@@ -32,7 +32,7 @@ public class TaskController {
     TaskLoggerService taskLoggerService;
 
     @PostMapping("/grab")
-    @Operation(summary = "执行抢单")
+    @Operation(summary = "执行抢单（用户）")
     public Result<TaskResponse> grabTask(@RequestBody GrabTaskRequest request) {
         Long userId = request.getUserId();
         if (grabTaskService.hasComplete(userId)) {
@@ -93,7 +93,7 @@ public class TaskController {
     }
 
     @PostMapping("/complete")
-    @Operation(summary = "完成任务按钮（加返利）")
+    @Operation(summary = "完成任务按钮（加返利）（用户）")
     public Result<String> completeTask(@RequestBody CompleteTaskRequest request) {
         TaskLogger task = taskLoggerService.findById(request.getTaskId())
                 .orElse(null);
@@ -133,7 +133,7 @@ public class TaskController {
     }
 
     @PostMapping("/reserve")
-    @Operation(summary = "管理员发布预约派单任务")
+    @Operation(summary = "管理员发布预约派单任务（身份“SALES，BOSS“）的权限")
     public Result<String> reserveTask(@RequestBody ReserveTaskRequest request) {
         boolean success = taskLoggerService.publishReservedTask(
                 request.getUserId(),
@@ -147,7 +147,7 @@ public class TaskController {
     }
 
     @PostMapping("/pending")
-    @Operation(summary = "查询当前用户未完成任务（购物车）")
+    @Operation(summary = "查询当前用户未完成任务（购物车）（所有人）")
     public Result<TaskResponse> getPendingTask(@RequestBody UserRequest request) {
         TaskLogger task = taskLoggerService.findPendingTaskByUserId(request.getUserId())
                 .orElse(null);
@@ -170,7 +170,7 @@ public class TaskController {
     }
 
     @PostMapping("/history")
-    @Operation(summary = "查询当前用户已完成任务记录（历史）")
+    @Operation(summary = "查询当前用户已完成任务记录（历史）（用户）")
     public Result<List<TaskResponse>> getCompletedTasks(@RequestBody UserRequest request) {
         List<TaskLogger> completedTasks = taskLoggerService.findCompletedTasksByUserId(request.getUserId());
 
