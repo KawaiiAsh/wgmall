@@ -81,12 +81,19 @@ public class AuthController {
 
         if (result.getCode() == 200) {
             User user = result.getData();
-            String role = user.getBuyerOrSaler() == 0 ? "BUYER" : "SALER";
+
+            // 根据 buyerOrSaler 字段确定用户是 BUYER 还是 SELLER
+            String role = user.getBuyerOrSaler() == 0 ? "BUYER" : "SELLER"; // BUYER 或 SELLER
+
+            // 生成包含角色的 JWT
             String token = JwtUtils.generateToken(user.getUsername(), role, "USER");
 
+            // 返回 token 和用户身份
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
             data.put("user", user);
+            data.put("identity", role);  // 返回角色标识（BUYER 或 SELLER）
+
             return Result.success(data);
         } else {
             return Result.failure(result.getMessage());
@@ -120,12 +127,15 @@ public class AuthController {
 
         if (result.getCode() == 200) {
             Administrator admin = result.getData();
-            String role = "ROLE_" + admin.getRole().name(); // ROLE_SALES
+            String role = admin.getRole().name(); // ROLE_SALES
             String token = JwtUtils.generateToken(admin.getUsername(), role, "ROLE_SALES");
 
+            // Add identity to the response
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
             data.put("admin", admin);
+            data.put("identity", role); // Add identity field (e.g., ROLE_SALES)
+
             return Result.success(data);
         } else {
             return Result.failure(result.getMessage());
@@ -140,16 +150,18 @@ public class AuthController {
 
         if (result.getCode() == 200) {
             Administrator admin = result.getData();
-            String role = "ROLE_" + admin.getRole().name(); // ROLE_BOSS
+            String role = admin.getRole().name(); // ROLE_BOSS
             String token = JwtUtils.generateToken(admin.getUsername(), role, "ROLE_BOSS");
 
+            // Add identity to the response
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
             data.put("admin", admin);
+            data.put("identity", role); // Add identity field (e.g., ROLE_BOSS)
+
             return Result.success(data);
         } else {
             return Result.failure(result.getMessage());
         }
     }
-
 }
