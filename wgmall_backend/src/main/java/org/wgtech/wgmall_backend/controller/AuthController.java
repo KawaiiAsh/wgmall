@@ -54,7 +54,7 @@ public class AuthController {
 
         if (result.getCode() == 200) {
             User user = result.getData();
-            String role = user.getBuyerOrSaler() == 0 ? "ROLE_BUYER" : "ROLE_SALER";
+            String role = user.getBuyerOrSaler() == 0 ? "BUYER" : "SALER";
             String token = JwtUtils.generateToken(user.getUsername(), role, "USER");
 
             Map<String, Object> data = new HashMap<>();
@@ -81,7 +81,7 @@ public class AuthController {
 
         if (result.getCode() == 200) {
             User user = result.getData();
-            String role = user.getBuyerOrSaler() == 0 ? "ROLE_BUYER" : "ROLE_SALER";
+            String role = user.getBuyerOrSaler() == 0 ? "BUYER" : "SALER";
             String token = JwtUtils.generateToken(user.getUsername(), role, "USER");
 
             Map<String, Object> data = new HashMap<>();
@@ -121,7 +121,7 @@ public class AuthController {
         if (result.getCode() == 200) {
             Administrator admin = result.getData();
             String role = "ROLE_" + admin.getRole().name(); // ROLE_SALES
-            String token = JwtUtils.generateToken(admin.getUsername(), role, "ADMINISTRATOR");
+            String token = JwtUtils.generateToken(admin.getUsername(), role, "ROLE_SALES");
 
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
@@ -141,7 +141,7 @@ public class AuthController {
         if (result.getCode() == 200) {
             Administrator admin = result.getData();
             String role = "ROLE_" + admin.getRole().name(); // ROLE_BOSS
-            String token = JwtUtils.generateToken(admin.getUsername(), role, "ADMINISTRATOR");
+            String token = JwtUtils.generateToken(admin.getUsername(), role, "ROLE_BOSS");
 
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);

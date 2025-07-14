@@ -37,7 +37,7 @@ public class AdministratorController {
      * @return 操作结果，包含成功时返回的业务员信息或失败提示
      */
     @PostMapping("/createsales")
-    @Operation(summary = "创建业务员账号✅")
+    @Operation(summary = "创建业务员账号（身份“BOSS”的权限）")
     public Result<Administrator> createSalesperson(
             @RequestBody CreateSalesRequest request
     ) {
@@ -66,7 +66,7 @@ public class AdministratorController {
      * @return 操作结果
      */
     @PostMapping("/bansales/{id}")
-    @Operation(summary = "封禁业务员账号✅", description = "将指定业务员账号的 isBanned 设置为 true")
+    @Operation(summary = "封禁业务员账号（身份“BOSS”的权限）", description = "将指定业务员账号的 isBanned 设置为 true")
     public Result<Void> banAdministrator(@PathVariable int id) {
         try {
             administratorService.banAdministrator(id);
@@ -77,7 +77,7 @@ public class AdministratorController {
     }
 
     @PostMapping("/unbansales/{id}")
-    @Operation(summary = "解封业务员账号✅", description = "将指定业务员账号的 isBanned 设置为 false")
+    @Operation(summary = "解封业务员账号（身份“BOSS”的权限）", description = "将指定业务员账号的 isBanned 设置为 false")
     public Result<Void> unbanAdministrator(@PathVariable int id) {
         try {
             administratorService.unbanAdministrator(id);
@@ -91,14 +91,14 @@ public class AdministratorController {
      * 查询所有管理员（BOSS）
      */
     @GetMapping("/bosses")
-    @Operation(summary = "获取所有管理员✅", description = "列出所有角色为BOSS的管理员账号")
+    @Operation(summary = "获取所有管理员（暂时用不上，不写）", description = "列出所有角色为BOSS的管理员账号")
     public Result<List<Administrator>> getAllBosses() {
         List<Administrator> bosses = administratorService.getAllBosses();
         return Result.success(bosses);
     }
 
     @GetMapping("/sales/page")
-    @Operation(summary = "分页获取所有业务员✅", description = "按ID倒序分页获取")
+    @Operation(summary = "分页获取所有业务员（身份”BOSS“的权限）", description = "按ID倒序分页获取")
     public Result<Page<Administrator>> getSalesPageByIdDesc(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -108,7 +108,7 @@ public class AdministratorController {
 
 
     @GetMapping("/sales/search")
-    @Operation(summary = "根据昵称搜索业务员✅", description = "模糊查询 + 分页 + 倒序")
+    @Operation(summary = "根据昵称搜索业务员（身份”BOSS“的权限）", description = "模糊查询 + 分页 + 倒序")
     public Result<Page<Administrator>> searchSales(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -118,7 +118,7 @@ public class AdministratorController {
     }
 
     @GetMapping("/sales/{id}")
-    @Operation(summary = "根据ID查找业务员✅", description = "返回指定业务员信息")
+    @Operation(summary = "根据ID查找业务员（身份”BOSS的权限“）", description = "返回指定业务员信息")
     public Result<Administrator> findSalesById(@PathVariable long id) {
         return administratorService.findSalesById(id);
     }

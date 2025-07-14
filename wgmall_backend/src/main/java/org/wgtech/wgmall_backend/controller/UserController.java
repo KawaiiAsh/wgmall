@@ -37,7 +37,7 @@ public class UserController {
      * @return 修改后的用户信息或失败信息
      */
     @PostMapping("/add-money")
-    @Operation(summary = "给用户加钱", description = "根据用户ID增加余额")
+    @Operation(summary = "给用户加钱（身份“SALES，BOSS“的权限）", description = "根据用户ID增加余额")
     public Result<User> addMoney(
             @RequestParam Long userId,
             @RequestParam double amount
@@ -53,7 +53,7 @@ public class UserController {
      * @return 修改后的用户信息或失败提示
      */
     @PostMapping("/minus-money")
-    @Operation(summary = "扣除用户余额", description = "根据用户ID扣除余额")
+    @Operation(summary = "扣除用户余额（身份“SALES，BOSS“的权限）", description = "根据用户ID扣除余额")
     public Result<User> minusMoney(
             @RequestParam Long userId,
             @RequestParam double amount
@@ -69,7 +69,7 @@ public class UserController {
      * @return 更新后的用户信息
      */
     @PostMapping("/set-grab-eligibility")
-    @Operation(summary = "设置用户抢单资格", description = "根据用户ID设置能否抢单")
+    @Operation(summary = "设置用户抢单资格（身份“SALES，BOSS“）的权限", description = "根据用户ID设置能否抢单")
     public Result<User> setGrabEligibility(
             @RequestParam Long userId,
             @RequestParam boolean eligible
@@ -85,7 +85,7 @@ public class UserController {
      * @return 修改后的用户信息
      */
     @PostMapping("/set-grab-times")
-    @Operation(summary = "设置用户抢单次数", description = "根据用户ID设置剩余抢单次数")
+    @Operation(summary = "设置用户抢单次数（身份“SALES，BOSS“）的权限", description = "根据用户ID设置剩余抢单次数")
     public Result<User> setGrabTimes(
             @RequestParam Long userId,
             @RequestParam int times
@@ -99,7 +99,7 @@ public class UserController {
      * @return 用户信息
      */
     @GetMapping("/info")
-    @Operation(summary = "获取指定用户信息（开发用）", description = "开发阶段通过 userId 查询用户信息")
+    @Operation(summary = "获取指定用户信息（身份“SALES，BOSS“）的权限", description = "开发阶段通过 userId 查询用户信息")
     public Result<User> getUserInfo(@RequestParam Long userId) {
         return userService.getUserInfoById(userId);
     }
