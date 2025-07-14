@@ -26,12 +26,22 @@ public class SecurityConfig {
         return http
                 .csrf().disable()
                 .authorizeHttpRequests()
-                .anyRequest().permitAll()
+                .requestMatchers(    "/auth/login",
+                        "/auth/register",
+                        "/auth/login-admin",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/webjars/**",
+                        "/uploads/products/**").permitAll() // 允许匿名访问登录/注册接口
+                .anyRequest().authenticated() // 其他所有接口都需要认证
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) // 加入 JWT 过滤器
                 .build();
     }
+
 
     /**
      * 注入 AuthenticationManager，提供认证功能（用于登录验证等）
