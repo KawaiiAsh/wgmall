@@ -47,7 +47,7 @@ public class User {
     private String inviteCode;        // 邀码
 
     // 用字符串存储上级昵称（可能是用户，也可能是管理员）
-    private String superiorUsername;
+    private String superiorUsername; // 其实是上级的nickname
 
     @NotNull(message = "接单数量不能为空")  // 非空校验
     private int orderCount;           // 可刷单数量
@@ -100,16 +100,16 @@ public class User {
     private String ethWalletAddress;
     private String coinWalletAddress;
 
-    @Size(min = 1, max = 50, message = "银行卡名称长度在1到50个字符之间")
-    private String bankName;          // 银行卡名称（可以为空）
-
-    @Size(min = 16, max = 19, message = "银行卡账号长度应为16到19个字符")
-    private String bankAccount;       // 银行卡账号（可以为空）
-
-    private Date bankExpiryDate;      // 银行卡有效期（可以为空）
-
-    @Size(min = 3, max = 3, message = "银行卡后三位应该是3个数字")
-    private String bankCardCVV;       // 银行卡后三位（可以为空）
+//    @Size(min = 1, max = 50, message = "银行卡名称长度在1到50个字符之间")
+//    private String bankName;          // 银行卡名称（可以为空）
+//
+//    @Size(min = 16, max = 19, message = "银行卡账号长度应为16到19个字符")
+//    private String bankAccount;       // 银行卡账号（可以为空）
+//
+//    private Date bankExpiryDate;      // 银行卡有效期（可以为空）
+//
+//    @Size(min = 3, max = 3, message = "银行卡后三位应该是3个数字")
+//    private String bankCardCVV;       // 银行卡后三位（可以为空）
 
     private String country;           // 国家
 

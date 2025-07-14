@@ -167,6 +167,21 @@ public class UserController {
         return Result.success(users);
     }
 
+    @GetMapping("/total-order-count")
+    @Operation(summary = "获取用户总刷单次数（所有人）", description = "通过用户ID查询该用户的总刷单次数")
+    public Result<Integer> getTotalOrderCount(@RequestParam Long userId) {
+        try {
+            // Fetching user by userId
+            User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("用户未找到"));
+
+            // Returning the total order count of the user
+            return Result.success(user.getTotalOrderCount());
+        } catch (Exception e) {
+            // Handling errors
+            return Result.failure("查询失败: " + e.getMessage());
+        }
+    }
+
     @PutMapping("/tron/set")
     @Operation(summary = "设置 Tron 地址（用户）")
     public Result<Void> setTron(@RequestParam Long userId, @RequestParam String address) {

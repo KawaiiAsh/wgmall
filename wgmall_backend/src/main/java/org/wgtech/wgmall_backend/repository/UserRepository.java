@@ -51,5 +51,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findAllByOrderByRegisterTimeDesc(Pageable pageable);
 
+    int findTotalOrderCountById(Long id);
+
 
 }
