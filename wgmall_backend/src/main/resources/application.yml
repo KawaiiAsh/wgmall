@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:mysql://hopper.proxy.rlwy.net:44435/railway
+    url: jdbc:mysql://mysql-production-4bd1.up.railway.app:3306/railway?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: YmaBpaOCvqLOcrYExdfsTahfiAzTLGhb
+    password: uuSOrxujvbXnEkeCpJwPmMHgUmWOcUtl
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
