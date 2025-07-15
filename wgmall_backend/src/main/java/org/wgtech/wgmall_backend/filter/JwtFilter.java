@@ -22,10 +22,10 @@ public class JwtFilter extends GenericFilter {
             throws IOException, ServletException {
 
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         String path = httpRequest.getRequestURI();
 
+        // 放行无需认证的路径
         if (path.startsWith("/auth/")
                 || path.startsWith("/swagger")
                 || path.startsWith("/v3")
@@ -43,25 +43,21 @@ public class JwtFilter extends GenericFilter {
                 String jwt = authHeader.substring(7);
                 if (JwtUtils.validateToken(jwt)) {
                     String username = JwtUtils.getUsernameFromToken(jwt);
-                    String role = JwtUtils.getRoleFromToken(jwt); // e.g. ROLE_BUYER
+                    String role = JwtUtils.getRoleFromToken(jwt);
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(username, null,
                                     List.of(new SimpleGrantedAuthority(role)));
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    chain.doFilter(request, response);
-                    return;
-                } else {
-                    httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
-                    return;
                 }
             } catch (Exception e) {
-                httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token parsing failed");
-                return;
+                // 解析失败不设置认证状态，但也不直接响应，让 Spring Security 自己处理
             }
-        } else {
-            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing JWT token");
         }
+
+        // 最终一定要放行，不要直接 return
+        chain.doFilter(request, response);
     }
+
 }

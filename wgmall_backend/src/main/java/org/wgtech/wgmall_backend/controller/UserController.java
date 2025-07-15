@@ -99,7 +99,7 @@ public class UserController {
      * @return 用户信息
      */
     @GetMapping("/info")
-    @Operation(summary = "获取指定用户信息（身份“SALES，BOSS“）的权限", description = "开发阶段通过 userId 查询用户信息")
+    @Operation(summary = "获取指定用户信息")
     public Result<User> getUserInfo(@RequestParam Long userId) {
         return userService.getUserInfoById(userId);
     }
