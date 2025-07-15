@@ -92,7 +92,7 @@ public class TaskController {
                 task.getProductName(),
                 task.getProductId(),
                 task.getProductAmount(),
-                task.getDispatchType().name()
+                task.getDispatchType()
         );
 
 
@@ -171,7 +171,7 @@ public class TaskController {
                 task.getProductName(),       // ✅ 快照字段
                 task.getProductId(),
                 task.getProductAmount(),
-                task.getDispatchType().name()
+                task.getDispatchType()
         );
 
         return Result.success(response);
@@ -199,7 +199,7 @@ public class TaskController {
                         task.getProductName(),       // ✅ 使用快照字段
                         task.getProductId(),
                         task.getProductAmount(),
-                        task.getDispatchType().name()
+                        task.getDispatchType()
                 )
         ).toList();
 

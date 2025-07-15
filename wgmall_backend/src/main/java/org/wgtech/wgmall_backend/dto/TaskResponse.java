@@ -3,6 +3,7 @@ package org.wgtech.wgmall_backend.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.wgtech.wgmall_backend.entity.TaskLogger;
 
 import java.math.BigDecimal;
 
@@ -15,5 +16,5 @@ public class TaskResponse {
     private String productName;             // 商品名称
     private Long productId;                 // 商品ID
     private BigDecimal productAmount;       // 商品金额
-    private String dispatchType;            // 派单类型：RANDOM / ASSIGNED / RESERVED
+    private TaskLogger.DispatchType dispatchType;
 }
