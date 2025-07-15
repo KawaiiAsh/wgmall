@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.wgtech.wgmall_backend.entity.LoanApplication;
 import org.wgtech.wgmall_backend.entity.RepaymentLog;
 import org.wgtech.wgmall_backend.entity.User;
@@ -16,7 +17,11 @@ import org.wgtech.wgmall_backend.repository.UserRepository;
 import org.wgtech.wgmall_backend.service.LoanApplicationService;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 
 @RestController
@@ -38,9 +43,12 @@ public class LoanApplicationController {
      * @param loanApplication 贷款申请的所有字段
      * @return 贷款申请提交结果
      */
-    @PostMapping("/apply")
+    @PostMapping(value = "/apply", consumes = {"multipart/form-data"})
     @Operation(summary = "提交贷款表单（用户）")
-    public Result<LoanApplication> applyLoan(@RequestBody LoanApplication loanApplication) {
+    public Result<LoanApplication> applyLoan(
+            @RequestPart("loanData") LoanApplication loanApplication,
+            @RequestPart("idCardFront") MultipartFile idCardFront
+    ) {
         try {
             User user = userRepository.findById(loanApplication.getUser().getId())
                     .orElseThrow(() -> new IllegalArgumentException("用户未找到"));
@@ -48,12 +56,21 @@ public class LoanApplicationController {
             String superiorNickname = user.getSuperiorUsername();
             loanApplication.setSuperiorNickname(superiorNickname != null ? superiorNickname : "无上级");
 
+            // 保存身份证图片
+            String uploadDir = "uploads/id/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+
+            String filename = System.currentTimeMillis() + "_" + idCardFront.getOriginalFilename();
+            Path filepath = Paths.get(uploadDir, filename);
+            Files.write(filepath, idCardFront.getBytes());
+
+            loanApplication.setIdCardFront("/" + filepath.toString().replace("\\", "/")); // 设置相对路径
             loanApplication.setUser(user);
             loanApplication.setStatus(LoanApplication.ApplicationStatus.PENDING);
             loanApplication.setSubmittedAt(new Date());
 
             LoanApplication submittedLoan = loanApplicationService.submitLoanApplication(loanApplication);
-
             return Result.success(submittedLoan);
         } catch (Exception e) {
             return Result.failure("贷款申请失败: " + e.getMessage());

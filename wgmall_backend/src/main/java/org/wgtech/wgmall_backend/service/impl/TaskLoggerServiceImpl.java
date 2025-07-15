@@ -1,6 +1,8 @@
 package org.wgtech.wgmall_backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.wgtech.wgmall_backend.entity.Product;
 import org.wgtech.wgmall_backend.entity.TaskLogger;
@@ -137,7 +139,9 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
     }
 
     @Override
-    public List<TaskLogger> findCompletedTasksByUserId(Long userId) {
-        return taskLoggerRepository.findByUserIdAndCompletedTrueOrderByCompleteTimeDesc(userId);
+    public Page<TaskLogger> findCompletedTasksByUserId(Long userId, Pageable pageable) {
+        return taskLoggerRepository.findByUserIdAndCompletedTrue(userId, pageable);
     }
+
+
 }

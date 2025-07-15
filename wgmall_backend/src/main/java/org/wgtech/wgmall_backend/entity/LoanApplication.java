@@ -56,7 +56,7 @@ public class LoanApplication {
     private String country;
 
     @NotNull
-    private String idCardFront;
+    private String idCardFront; // 图片路径
 
     @NotNull
     private String addressLine1;

@@ -1,5 +1,7 @@
 package org.wgtech.wgmall_backend.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.wgtech.wgmall_backend.entity.TaskLogger;
 
 import java.math.BigDecimal;
@@ -51,5 +53,5 @@ public interface TaskLoggerService {
 
     Optional<TaskLogger> findPendingTaskByUserId(Long userId);
 
-    public List<TaskLogger> findCompletedTasksByUserId(Long userId);
+    Page<TaskLogger> findCompletedTasksByUserId(Long userId, Pageable pageable);
 }

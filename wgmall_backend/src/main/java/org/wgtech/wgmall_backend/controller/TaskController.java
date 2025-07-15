@@ -3,6 +3,10 @@ package org.wgtech.wgmall_backend.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.dto.*;
 import org.wgtech.wgmall_backend.entity.Product;
@@ -15,7 +19,9 @@ import org.wgtech.wgmall_backend.utils.Result;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/task")
@@ -170,15 +176,21 @@ public class TaskController {
     }
 
     @PostMapping("/history")
-    @Operation(summary = "查询当前用户已完成任务记录（历史）（用户）")
-    public Result<List<TaskResponse>> getCompletedTasks(@RequestBody UserRequest request) {
-        List<TaskLogger> completedTasks = taskLoggerService.findCompletedTasksByUserId(request.getUserId());
+    @Operation(summary = "查询当前用户已完成任务记录（分页，按完成时间倒序）（用户）")
+    public Result<Map<String, Object>> getCompletedTasks(
+            @RequestBody UserRequest request,
+            @RequestParam(defaultValue = "0") int page
+    ) {
+        int size = 10;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "completeTime"));
 
-        if (completedTasks == null || completedTasks.isEmpty()) {
+        Page<TaskLogger> completedTasksPage = taskLoggerService.findCompletedTasksByUserId(request.getUserId(), pageable);
+
+        if (completedTasksPage.isEmpty()) {
             return Result.failure("你还没有完成的任务记录");
         }
 
-        List<TaskResponse> responses = completedTasks.stream().map(task -> {
+        List<TaskResponse> responses = completedTasksPage.getContent().stream().map(task -> {
             Product product = task.getProduct();
             return new TaskResponse(
                     task.getId(),
@@ -190,6 +202,16 @@ public class TaskController {
             );
         }).toList();
 
-        return Result.success(responses);
+        // 返回分页结构
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", responses);
+        result.put("totalPages", completedTasksPage.getTotalPages());
+        result.put("totalElements", completedTasksPage.getTotalElements());
+        result.put("currentPage", page);
+        result.put("last", completedTasksPage.isLast());
+
+        return Result.success(result);
     }
+
+
 }
