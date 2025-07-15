@@ -42,25 +42,27 @@ public class TaskController {
     public Result<TaskResponse> grabTask(@RequestBody GrabTaskRequest request) {
         Long userId = request.getUserId();
         if (grabTaskService.hasComplete(userId)) {
-            return Result.failure("你还有未完成的任务，请先完成后再抢单");
+            return Result.badRequest("你还有未完成的任务，请先完成后再抢单");
         }
         if (!grabTaskService.hasGrabPermission(userId)) {
-            return Result.failure("抢单人数过多，过于繁忙");
+            return Result.badRequest("抢单人数过多，过于繁忙");
         }
         if (grabTaskService.getRemainingGrabTimes(userId) <= 0) {
-            return Result.failure("你的抢单数量不够");
+            return Result.badRequest("你的抢单数量不够");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElse(null);
+        if (user == null) {
+            return Result.tokenInvalid("用户不存在或登录失效");
+        }
 
         TaskLogger task;
-
         if (user.isAppointmentStatus()
                 && user.getOrderCount() == user.getAppointmentNumber()) {
             List<TaskLogger> reservedTasks = taskLoggerService.findUnTakenReservedTasks(userId);
             if (reservedTasks.isEmpty()) {
-                return Result.failure("暂无可领取的预约任务");
+                return Result.badRequest("暂无可领取的预约任务");
             }
             task = reservedTasks.get(0);
             task.setTaken(true);
@@ -68,7 +70,6 @@ public class TaskController {
             if (taskLoggerService.countUnCompletedReservedTasks(userId) == 0) {
                 user.setAppointmentStatus(false);
             }
-
         } else {
             task = taskLoggerService.publishRandomTask(
                     user.getId(),
@@ -76,7 +77,7 @@ public class TaskController {
                     user.getBalance()
             );
             if (task == null) {
-                return Result.failure("暂无适合您余额的商品，无法派发任务");
+                return Result.badRequest("暂无适合您余额的商品，无法派发任务");
             }
         }
 
@@ -86,11 +87,10 @@ public class TaskController {
         taskLoggerService.save(task);
 
         Product product = task.getProduct();
-
         if (product == null) {
-            throw new RuntimeException("任务的商品信息为空！Task ID: " + task.getId());
+            return Result.failure("任务的商品信息为空！Task ID: " + task.getId()); // 系统异常，保留 500
         }
-        
+
         TaskResponse response = new TaskResponse(
                 task.getId(),
                 product.getImagePath(),
@@ -103,20 +103,23 @@ public class TaskController {
         return Result.success(response);
     }
 
+
     @PostMapping("/complete")
     @Operation(summary = "完成任务按钮（加返利）（用户）")
     public Result<String> completeTask(@RequestBody CompleteTaskRequest request) {
-        TaskLogger task = taskLoggerService.findById(request.getTaskId())
-                .orElse(null);
+        TaskLogger task = taskLoggerService.findById(request.getTaskId()).orElse(null);
         if (task == null) {
-            return Result.failure("任务不存在");
-        }
-        if (Boolean.TRUE.equals(task.getCompleted())) {
-            return Result.failure("任务已完成，不能重复提交");
+            return Result.badRequest("任务不存在");
         }
 
-        User user = userRepository.findById(task.getUserId())
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        if (Boolean.TRUE.equals(task.getCompleted())) {
+            return Result.badRequest("任务已完成，不能重复提交");
+        }
+
+        User user = userRepository.findById(task.getUserId()).orElse(null);
+        if (user == null) {
+            return Result.tokenInvalid("用户不存在或登录失效");
+        }
 
         task.setCompleted(true);
         task.setCompleteTime(LocalDateTime.now());
@@ -126,8 +129,7 @@ public class TaskController {
                 ? task.getRebate()
                 : user.getRebate();
 
-        BigDecimal rebateAmount = task.getProductAmount()
-                .multiply(BigDecimal.valueOf(rebateRate));
+        BigDecimal rebateAmount = task.getProductAmount().multiply(BigDecimal.valueOf(rebateRate));
 
         user.setBalance(user.getBalance().add(rebateAmount));
         user.setTotalProfit(user.getTotalProfit().add(rebateAmount));
@@ -142,6 +144,7 @@ public class TaskController {
 
         return Result.success("任务完成，返利：" + rebateAmount + "，当前余额：" + user.getBalance());
     }
+
 
     @PostMapping("/reserve")
     @Operation(summary = "管理员发布预约派单任务（身份“SALES，BOSS“）的权限")
@@ -164,9 +167,8 @@ public class TaskController {
                 .orElse(null);
 
         if (task == null) {
-            return Result.failure("你没有未完成的任务");
+            return Result.badRequest("你没有未完成的任务");
         }
-
         Product product = task.getProduct();
         TaskResponse response = new TaskResponse(
                 task.getId(),
@@ -192,7 +194,7 @@ public class TaskController {
         Page<TaskLogger> completedTasksPage = taskLoggerService.findCompletedTasksByUserId(request.getUserId(), pageable);
 
         if (completedTasksPage.isEmpty()) {
-            return Result.failure("你还没有完成的任务记录");
+            return Result.badRequest("你还没有完成的任务记录");
         }
 
         List<TaskResponse> responses = completedTasksPage.getContent().stream().map(task -> {
