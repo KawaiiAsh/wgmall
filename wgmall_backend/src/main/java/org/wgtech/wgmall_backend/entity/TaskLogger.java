@@ -29,7 +29,7 @@ public class TaskLogger {
     @NotNull(message = "商品ID不能为空")
     private Long productId;  // 商品ID
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "productId", insertable = false, updatable = false)
     private Product product;  // 商品引用
 
