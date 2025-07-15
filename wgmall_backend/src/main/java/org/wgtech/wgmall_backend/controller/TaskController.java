@@ -86,19 +86,15 @@ public class TaskController {
         userRepository.save(user);
         taskLoggerService.save(task);
 
-        Product product = task.getProduct();
-        if (product == null) {
-            return Result.failure("任务的商品信息为空！Task ID: " + task.getId()); // 系统异常，保留 500
-        }
-
         TaskResponse response = new TaskResponse(
                 task.getId(),
-                product.getImagePath(),
-                product.getName(),
+                task.getProductImagePath(),
+                task.getProductName(),
                 task.getProductId(),
                 task.getProductAmount(),
                 task.getDispatchType().name()
         );
+
 
         return Result.success(response);
     }
@@ -169,11 +165,10 @@ public class TaskController {
         if (task == null) {
             return Result.badRequest("你没有未完成的任务");
         }
-        Product product = task.getProduct();
         TaskResponse response = new TaskResponse(
                 task.getId(),
-                product.getImagePath(),
-                product.getName(),
+                task.getProductImagePath(),  // ✅ 快照字段
+                task.getProductName(),       // ✅ 快照字段
                 task.getProductId(),
                 task.getProductAmount(),
                 task.getDispatchType().name()
@@ -197,17 +192,17 @@ public class TaskController {
             return Result.badRequest("你还没有完成的任务记录");
         }
 
-        List<TaskResponse> responses = completedTasksPage.getContent().stream().map(task -> {
-            Product product = task.getProduct();
-            return new TaskResponse(
-                    task.getId(),
-                    product != null ? product.getImagePath() : null,
-                    product != null ? product.getName() : null,
-                    task.getProductId(),
-                    task.getProductAmount(),
-                    task.getDispatchType().name()
-            );
-        }).toList();
+        List<TaskResponse> responses = completedTasksPage.getContent().stream().map(task ->
+                new TaskResponse(
+                        task.getId(),
+                        task.getProductImagePath(),  // ✅ 使用快照字段
+                        task.getProductName(),       // ✅ 使用快照字段
+                        task.getProductId(),
+                        task.getProductAmount(),
+                        task.getDispatchType().name()
+                )
+        ).toList();
+
 
         // 返回分页结构
         Map<String, Object> result = new HashMap<>();

@@ -51,11 +51,13 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
         TaskLogger task = TaskLogger.builder()
                 .userId(userId)
                 .username(username)
-                .productId(selected.getId())
-                .productAmount(selected.getPrice())
+                .productId(selected.getId())               // ✅ 商品ID快照
+                .productName(selected.getName())           // ✅ 商品名称快照
+                .productAmount(selected.getPrice())        // ✅ 商品价格快照
+                .productImagePath(selected.getImagePath()) // ✅ 商品图片快照
                 .dispatchType(TaskLogger.DispatchType.RANDOM)
                 .rebate(rebate)
-                .dispatcher("随机订单") // 发布人统一为“随机订单”
+                .dispatcher("随机订单")
                 .createTime(LocalDateTime.now())
                 .completed(false)
                 .taken(false)
@@ -64,6 +66,7 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
         // 5. 保存任务记录
         return taskLoggerRepository.save(task);
     }
+
 
     /**
      * 发布一个“预留”类型的任务（通常是为特定用户准备的）
