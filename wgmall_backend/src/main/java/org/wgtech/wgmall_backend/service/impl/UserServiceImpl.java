@@ -98,6 +98,7 @@ public class UserServiceImpl implements UserService {
                     .isBanned(false)
                     .balance(BigDecimal.ZERO)
                     .noneUsefulBalance(BigDecimal.ZERO)
+                    .debtAmount(BigDecimal.ZERO)
                     .toggle(false)
                     .canWithdraw(false)
                     .appointmentStatus(false)

@@ -40,8 +40,12 @@ public class User {
     @NotNull(message = "余额不能为空")  // 非空校验
     private BigDecimal balance;           // 余额
 
-    @NotNull(message = "不可用余额不能为0.00")
+    @NotNull(message = "不可用余额不能为空")
     private BigDecimal  noneUsefulBalance; // 不可用余额
+
+    @NotNull(message = "欠款金额不能为空")
+    private BigDecimal debtAmount; // 欠款金额
+
 
     @NotNull(message = "邀请码不能为空")  // 非空校验
     private String inviteCode;        // 邀码

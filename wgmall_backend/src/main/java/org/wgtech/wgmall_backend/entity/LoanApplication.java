@@ -18,74 +18,88 @@ public class LoanApplication {
     private Long id;
 
     @NotNull
-    private String firstName;          // 名字
+    private String firstName;
 
-    private String middleName;         // 中间名（可选）
-
-    @NotNull
-    private String lastName;           // 姓
+    private String middleName;
 
     @NotNull
-    private Date birthDate;            // 出生日期
+    private String lastName;
 
     @NotNull
-    private String gender;             // 性别
+    private Date birthDate;
 
     @NotNull
-    private String countryCode;        // 国家区号
+    private String gender;
 
     @NotNull
-    private String phoneNumber;        // 手机号
+    private String countryCode;
 
     @NotNull
-    private double annualIncome;       // 年收入
+    private String phoneNumber;
 
     @NotNull
-    private String bankName;           // 银行卡名称
+    private double annualIncome;
 
     @NotNull
-    private String bankAccountNumber;  // 银行卡卡号
+    private String bankName;
 
     @NotNull
-    private String bankCardExpiry;     // 截止日期 (MM/YY)
+    private String bankAccountNumber;
 
     @NotNull
-    private String cvv;                // CVV
+    private String bankCardExpiry;
 
     @NotNull
-    private String country;            // 国家
+    private String cvv;
 
     @NotNull
-    private String idCardFront;        // 身份证正面图片或护照正面图片路径
+    private String country;
 
     @NotNull
-    private String addressLine1;       // 地址1
+    private String idCardFront;
 
     @NotNull
-    private String addressLine2;       // 地址2
+    private String addressLine1;
 
     @NotNull
-    private String city;               // 城市
+    private String addressLine2;
 
     @NotNull
-    private String stateOrProvince;   // 省/州
+    private String city;
 
     @NotNull
-    private String postalCode;         // 邮政编码
+    private String stateOrProvince;
 
     @NotNull
-    private String loanAmountRange;    // 期望的贷款金额区间
-
-    private String assetProof;         // 资产证明（可选，房产证，车证）
+    private String postalCode;
 
     @NotNull
-    private boolean agreementConfirmed; // 确认协议
+    private String loanAmountRange;
+
+    private String assetProof;
 
     @NotNull
-    private String superiorNickname;           // 上级 nickname
+    private boolean agreementConfirmed;
 
-    // 添加与 User 的一对一关系
+    @NotNull
+    private String superiorNickname;
+
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
-    private User user; // 与 User 一对多关系
+    private User user;
+
+    @NotNull
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date submittedAt;
+
+    @Enumerated(EnumType.STRING)
+    private ApplicationStatus status;
+
+    private String reviewRemarks;
+
+    public enum ApplicationStatus {
+        PENDING,
+        APPROVED,
+        REJECTED
+    }
 }
