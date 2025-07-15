@@ -102,8 +102,6 @@ public class AuthController {
     }
 
 
-
-
     /**
      * 修改登录密码（根据用户名）
      *
@@ -165,4 +163,37 @@ public class AuthController {
             return Result.failure(result.getMessage());
         }
     }
+
+    /**
+     * 用户退出登录接口
+     *
+     * @return 成功提示（前端应主动清除 token）
+     */
+    @PostMapping("/logout")
+    @Operation(summary = "用户退出登录", description = "前端清除 token 即可，后端可用于记录日志等")
+    public Result<String> logoutUser() {
+        // 可选：添加 token 黑名单处理或日志记录
+        return Result.success("用户已成功退出登录");
+    }
+
+    /**
+     * 业务员退出登录接口
+     */
+    @PostMapping("/logout-admin")
+    @Operation(summary = "业务员退出登录", description = "前端清除 token 即可，后端记录日志或状态")
+    public Result<String> logoutAdmin() {
+        // 可选：添加 token 黑名单处理或记录退出时间等
+        return Result.success("业务员已成功退出登录");
+    }
+
+    /**
+     * 客服退出登录接口
+     */
+    @PostMapping("/logout-boss")
+    @Operation(summary = "客服退出登录", description = "前端清除 token 即可，后端记录退出操作")
+    public Result<String> logoutBoss() {
+        // 可选：添加日志记录或行为分析处理
+        return Result.success("客服已成功退出登录");
+    }
+
 }
