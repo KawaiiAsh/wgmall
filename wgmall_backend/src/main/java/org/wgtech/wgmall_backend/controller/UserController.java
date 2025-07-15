@@ -233,4 +233,17 @@ public class UserController {
     public Result<String> getCoin(@RequestParam Long userId) {
         return Result.success(userService.getCoinAddress(userId));
     }
+
+    @GetMapping("/balance")
+    @Operation(summary = "获取用户余额（身份“SALES，BOSS“）的权限", description = "根据用户ID获取余额")
+    public Result<BigDecimal> getUserBalance(@RequestParam Long userId) {
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("用户未找到"));
+            return Result.success(user.getBalance());
+        } catch (Exception e) {
+            return Result.failure("查询失败: " + e.getMessage());
+        }
+    }
+
 }
