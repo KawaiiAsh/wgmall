@@ -1,6 +1,7 @@
 package org.wgtech.wgmall_backend.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/user")
+@SecurityRequirement(name = "JWT")
 @Tag(name = "用户接口", description = "用于操作用户数据的接口")
 public class UserController {
 

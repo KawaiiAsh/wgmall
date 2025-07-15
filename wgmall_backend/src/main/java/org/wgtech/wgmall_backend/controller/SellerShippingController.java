@@ -1,5 +1,6 @@
 package org.wgtech.wgmall_backend.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +18,7 @@ import org.wgtech.wgmall_backend.utils.Result;
 
 @RestController
 @RequestMapping("/seller/shipping")
+@SecurityRequirement(name = "JWT")
 @RequiredArgsConstructor
 public class SellerShippingController {
 

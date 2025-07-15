@@ -2,6 +2,7 @@ package org.wgtech.wgmall_backend.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/wishlist")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "JWT")
 @Tag(name = "心愿单接口", description = "用户心愿单增删查改相关操作")
 public class WishlistController {
 
