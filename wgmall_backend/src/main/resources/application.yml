@@ -4,8 +4,6 @@ spring:
     username: root
     password: uuSOrxujvbXnEkeCpJwPmMHgUmWOcUtl
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 10
   jpa:
     hibernate:
       ddl-auto: update  # 控制自动生成数据库结构 (可以使用 create, update, validate 或 none)
