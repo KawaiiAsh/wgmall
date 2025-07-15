@@ -3,6 +3,7 @@ package org.wgtech.wgmall_backend.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +14,7 @@ import org.wgtech.wgmall_backend.dto.*;
 import org.wgtech.wgmall_backend.entity.Product;
 import org.wgtech.wgmall_backend.entity.TaskLogger;
 import org.wgtech.wgmall_backend.entity.User;
+import org.wgtech.wgmall_backend.repository.TaskLoggerRepository;
 import org.wgtech.wgmall_backend.repository.UserRepository;
 import org.wgtech.wgmall_backend.service.GrabTaskService;
 import org.wgtech.wgmall_backend.service.TaskLoggerService;
@@ -25,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 @RestController
 @RequestMapping("/task")
-@SecurityRequirement(name = "JWT")
 @Tag(name = "刷单流程接口", description = "实现刷单所需要的接口")
 public class TaskController {
 
@@ -37,6 +38,9 @@ public class TaskController {
 
     @Autowired
     TaskLoggerService taskLoggerService;
+
+    @Autowired
+    TaskLoggerRepository taskLoggerRepository;
 
     @PostMapping("/grab")
     @Operation(summary = "执行抢单（用户）")
@@ -76,10 +80,13 @@ public class TaskController {
                     user.getId(),
                     user.getUsername(),
                     user.getBalance()
+
             );
+
             if (task == null) {
                 return Result.badRequest("暂无适合您余额的商品，无法派发任务");
             }
+
         }
 
         user.setOrderCount(user.getOrderCount() - 1);
@@ -100,47 +107,68 @@ public class TaskController {
         return Result.success(response);
     }
 
-
     @PostMapping("/complete")
-    @Operation(summary = "完成任务按钮（加返利）（用户）")
+    @Transactional
     public Result<String> completeTask(@RequestBody CompleteTaskRequest request) {
-        TaskLogger task = taskLoggerService.findById(request.getTaskId()).orElse(null);
-        if (task == null) {
-            return Result.badRequest("任务不存在");
-        }
+        System.out.println("🟢 /task/complete 接口调用，taskId = " + request.getTaskId());
 
-        if (Boolean.TRUE.equals(task.getCompleted())) {
-            return Result.badRequest("任务已完成，不能重复提交");
-        }
+        try {
+            TaskLogger task = taskLoggerService.findById(request.getTaskId()).orElse(null);
+            if (task == null) {
+                System.out.println("🔴 任务不存在！");
+                return Result.badRequest("任务不存在");
+            }
 
-        User user = userRepository.findById(task.getUserId()).orElse(null);
-        if (user == null) {
-            return Result.tokenInvalid("用户不存在或登录失效");
-        }
+            if (task.isCompleted()) {
+                System.out.println("⚠️ 任务已完成，禁止重复提交");
+                return Result.badRequest("任务已完成，不能重复提交");
+            }
 
-        task.setCompleted(true);
-        task.setCompleteTime(LocalDateTime.now());
-        taskLoggerService.save(task);
+            User user = userRepository.findById(task.getUserId()).orElse(null);
+            if (user == null) {
+                System.out.println("🔴 用户不存在！");
+                return Result.tokenInvalid("用户不存在或登录失效");
+            }
 
-        double rebateRate = (task.getDispatchType() == TaskLogger.DispatchType.RESERVED)
-                ? task.getRebate()
-                : user.getRebate();
+            task.setCompleted(true);
+            task.setTaken(true);
+            task.setCompleteTime(LocalDateTime.now());
 
-        BigDecimal rebateAmount = task.getProductAmount().multiply(BigDecimal.valueOf(rebateRate));
+            double rebateRate = (task.getDispatchType() == TaskLogger.DispatchType.RESERVED)
+                    ? task.getRebate()
+                    : user.getRebate();
 
-        user.setBalance(user.getBalance().add(rebateAmount));
-        user.setTotalProfit(user.getTotalProfit().add(rebateAmount));
+            BigDecimal rebateAmount = task.getProductAmount().multiply(BigDecimal.valueOf(rebateRate));
 
-        if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED) {
-            if (taskLoggerService.countUnCompletedReservedTasks(user.getId()) == 0) {
+            if (user.getBalance() == null) user.setBalance(BigDecimal.ZERO);
+
+            user.setBalance(user.getBalance()
+                    .add(task.getProductAmount())
+                    .add(rebateAmount));
+
+            user.setTotalProfit(user.getTotalProfit().add(rebateAmount));
+
+            if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED &&
+                    taskLoggerService.countUnCompletedReservedTasks(user.getId()) == 0) {
                 user.setAppointmentStatus(false);
             }
+
+            userRepository.save(user);
+            taskLoggerService.save(task);
+
+            System.out.println("✅ 任务完成成功");
+            return Result.success("任务完成，返利：" + rebateAmount + "，当前余额：" + user.getBalance());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.failure("任务完成失败，系统错误：" + e.getMessage());
         }
-
-        userRepository.save(user);
-
-        return Result.success("任务完成，返利：" + rebateAmount + "，当前余额：" + user.getBalance());
     }
+//    @GetMapping("/debug")
+//    public String debug(){
+//        return "Debug";
+//    }
+
 
 
     @PostMapping("/reserve")

@@ -57,7 +57,10 @@ public class TaskLogger {
 
     private LocalDateTime completeTime;
 
-    private Boolean completed = false;
+    @Column(nullable = false)
+    private boolean completed = false;
 
-    private Boolean taken = false;
+    @Column(nullable = false)
+    private boolean taken = false;
+
 }

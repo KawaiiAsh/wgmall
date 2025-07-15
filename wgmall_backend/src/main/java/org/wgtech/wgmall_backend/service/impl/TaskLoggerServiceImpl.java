@@ -133,8 +133,9 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
      */
     @Override
     public void save(TaskLogger taskLogger) {
-        taskLoggerRepository.save(taskLogger);
+        taskLoggerRepository.saveAndFlush(taskLogger);
     }
+
 
     @Override
     public Optional<TaskLogger> findPendingTaskByUserId(Long userId) {
