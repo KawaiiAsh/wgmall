@@ -86,6 +86,11 @@ public class TaskController {
         taskLoggerService.save(task);
 
         Product product = task.getProduct();
+
+        if (product == null) {
+            throw new RuntimeException("任务的商品信息为空！Task ID: " + task.getId());
+        }
+        
         TaskResponse response = new TaskResponse(
                 task.getId(),
                 product.getImagePath(),
