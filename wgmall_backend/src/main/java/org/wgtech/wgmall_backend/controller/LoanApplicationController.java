@@ -57,7 +57,7 @@ public class LoanApplicationController {
             loanApplication.setSuperiorNickname(superiorNickname != null ? superiorNickname : "无上级");
 
             // 保存身份证图片
-            String uploadDir = "uploads/id/";
+            String uploadDir = "uploads/loan/";
             File dir = new File(uploadDir);
             if (!dir.exists()) dir.mkdirs();
 

@@ -5,15 +5,22 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
+import org.wgtech.wgmall_backend.dto.CreatePurchaseRequest;
 import org.wgtech.wgmall_backend.dto.CreateSalesRequest;
-import org.wgtech.wgmall_backend.entity.Administrator;
-import org.wgtech.wgmall_backend.entity.User;
+import org.wgtech.wgmall_backend.entity.*;
+import org.wgtech.wgmall_backend.repository.ListedProductRepository;
+import org.wgtech.wgmall_backend.repository.PurchaseRequestRepository;
+import org.wgtech.wgmall_backend.repository.ShopRepository;
 import org.wgtech.wgmall_backend.service.AdministratorService;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.SalespersonCreator;
 import org.wgtech.wgmall_backend.utils.Result;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @RestController // 声明这是一个 REST 控制器，返回值默认以 JSON 形式响应
@@ -27,6 +34,14 @@ public class AdministratorController {
     @Autowired
     private AdministratorService administratorService; // 管理员服务，用于查询业务员列表
 
+    @Autowired
+    private ShopRepository shopRepository;
+
+    @Autowired
+    private ListedProductRepository listedProductRepository;
+
+    @Autowired
+    private PurchaseRequestRepository purchaseRequestRepository;
 
     /**
      * 创建业务员账号
@@ -122,5 +137,89 @@ public class AdministratorController {
     public Result<Administrator> findSalesById(@PathVariable long id) {
         return administratorService.findSalesById(id);
     }
+
+    @PostMapping("/purchase-request")
+    public Result<String> createPurchaseRequest(@RequestBody CreatePurchaseRequest req) {
+        Shop shop = shopRepository.findByName(req.getShopName())
+                .orElseThrow(() -> new RuntimeException("店铺不存在"));
+
+        User buyer = shop.getUser();
+
+        List<ListedProduct> listedProducts = listedProductRepository.findAllById(req.getProductQuantities().keySet());
+
+        List<PurchaseItem> items = new ArrayList<>();
+        List<ShippingItem> shippingItems = new ArrayList<>();
+
+        BigDecimal totalWholesale = BigDecimal.ZERO;
+        BigDecimal totalSale = BigDecimal.ZERO;
+
+        PurchaseRequest request = PurchaseRequest.builder()
+                .buyer(buyer)
+                .shop(shop)
+                .status(PurchaseRequest.Status.PENDING)
+                .createdAt(new Date())
+                .build();
+
+        // 生成 PurchaseItem + ShippingItem
+        for (ListedProduct listed : listedProducts) {
+            int qty = req.getProductQuantities().get(listed.getId());
+            BigDecimal wholesale = listed.getProduct().getPrice().multiply(BigDecimal.valueOf(qty));
+            BigDecimal sale = listed.getSalePrice().multiply(BigDecimal.valueOf(qty));
+
+            totalWholesale = totalWholesale.add(wholesale);
+            totalSale = totalSale.add(sale);
+
+            // 进货条目
+            PurchaseItem pi = PurchaseItem.builder()
+                    .listedProduct(listed)
+                    .quantity(qty)
+                    .wholesalePrice(listed.getProduct().getPrice())
+                    .salePrice(listed.getSalePrice())
+                    .request(request)
+                    .build();
+            items.add(pi);
+
+            // 发货状态条目
+            ShippingItem si = ShippingItem.builder()
+                    .listedProduct(listed)
+                    .request(request)
+                    .quantity(qty)
+                    .status(ShippingItem.ShippingStatus.PENDING)
+                    .build();
+            shippingItems.add(si);
+        }
+
+        request.setTotalWholesale(totalWholesale);
+        request.setTotalSale(totalSale);
+        request.setTotalProfit(totalSale.subtract(totalWholesale));
+        request.setItems(items);
+        request.setShippingItems(shippingItems); // ✅ 添加 ShippingItem 到 request 中
+
+        purchaseRequestRepository.save(request);
+
+        return Result.success("创建进货请求成功");
+    }
+
+    /**
+     * 分页查询某商家的上架商品（后台用）
+     */
+    @GetMapping("/admin/listed-products")
+    public Result<List<ListedProduct>> listByShopName(@RequestParam String shopName,
+                                                      @RequestParam int page,
+                                                      @RequestParam int size) {
+        Shop shop = shopRepository.findByName(shopName)
+                .orElseThrow(() -> new RuntimeException("店铺不存在"));
+
+        Page<ListedProduct> pageResult = listedProductRepository.findByShopId(shop.getId(), PageRequest.of(page, size));
+
+        Result.Pagination pagination = new Result.Pagination(
+                pageResult.getNumber(),
+                pageResult.getTotalPages(),
+                pageResult.getTotalElements(),
+                pageResult.getSize()
+        );
+        return Result.success(pageResult.getContent(), pagination);
+    }
+
 
 }

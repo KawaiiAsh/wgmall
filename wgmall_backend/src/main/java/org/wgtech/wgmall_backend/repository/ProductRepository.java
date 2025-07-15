@@ -1,5 +1,7 @@
 package org.wgtech.wgmall_backend.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -46,4 +48,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // 4. 随机返回
     @Query(value = "SELECT * FROM products ORDER BY RAND() LIMIT ?1", nativeQuery = true)
     List<Product> findRandomProducts(int limit);
+
+    Page<Product> findByTypeIn(List<Product.ProductType> types, Pageable pageable);
+
 }
