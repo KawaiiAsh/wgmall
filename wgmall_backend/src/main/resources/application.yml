@@ -23,4 +23,4 @@ logging:
 
 # 服务器配置
 server:
-  port: 8080
+  port: ${PORT:8080}
