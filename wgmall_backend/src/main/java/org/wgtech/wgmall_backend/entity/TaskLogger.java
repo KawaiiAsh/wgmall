@@ -1,14 +1,15 @@
 package org.wgtech.wgmall_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "task_logger")
-@Data
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,46 +17,46 @@ import java.time.LocalDateTime;
 @Builder
 public class TaskLogger {
 
+    public enum DispatchType {
+        RANDOM,
+        RESERVED
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;  // 日志ID
+    private Long id;
 
     @NotNull(message = "用户ID不能为空")
-    private Long userId;  // 用户ID
+    private Long userId;
 
     @NotNull(message = "用户名不能为空")
-    private String username;  // 用户用户名（冗余字段）
+    private String username;
 
     @NotNull(message = "商品ID不能为空")
-    private Long productId;  // 商品ID
+    private Long productId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "productId", insertable = false, updatable = false)
-    private Product product;  // 商品引用
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Product product;
 
     @NotNull(message = "商品金额不能为空")
-    private BigDecimal productAmount;  // 商品金额
+    private BigDecimal productAmount;
 
     @NotNull(message = "派单类型不能为空")
-    private DispatchType dispatchType;  // 派单类型（RANDOM / RESERVED）
+    @Enumerated(EnumType.STRING)
+    private DispatchType dispatchType;
 
-    private Double rebate;  // 比例
+    private Double rebate;
 
-    private String dispatcher;  // 派单人员昵称nickname
+    private String dispatcher;
 
     @NotNull
-    private LocalDateTime createTime;  // 日志创建时间
+    private LocalDateTime createTime;
 
-    private LocalDateTime completeTime; // 任务完成时间（用于盈利统计）
+    private LocalDateTime completeTime;
 
-    private Boolean completed = false;  // 是否完成：true/false
+    private Boolean completed = false;
 
-    private Boolean taken = false; // 是否被领取
-
-    public enum DispatchType {
-        RANDOM,
-        RESERVED,  // 预约派单
-    }
+    private Boolean taken = false;
 }
-
-
