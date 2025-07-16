@@ -63,4 +63,8 @@ public class TaskLogger {
     @Column(nullable = false)
     private boolean taken = false;
 
+    @Column(name = "trigger_threshold")
+    private Integer triggerThreshold;  // ✅ 设置任务触发门槛（当 orderCount == 这个值时可领取）
+
+
 }

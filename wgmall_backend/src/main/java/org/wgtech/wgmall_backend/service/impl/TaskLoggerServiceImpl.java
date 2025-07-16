@@ -72,22 +72,43 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
      * 发布一个“预留”类型的任务（通常是为特定用户准备的）
      */
     @Override
-    public boolean publishReservedTask(Long userId, String username, Long productId, BigDecimal amount, Double rebate, String dispatcher) {
+    public boolean publishReservedTask(Long userId, String username, Long productId,
+                                       BigDecimal amount, Double rebate, String dispatcher, int triggerThreshold) {
+        Product product = productRepository.findById(productId).orElse(null);
+        if (product == null) return false;
+
         TaskLogger task = TaskLogger.builder()
                 .userId(userId)
                 .username(username)
                 .productId(productId)
                 .productAmount(amount)
+                .productName(product.getName())
+                .productImagePath(product.getImagePath())
                 .dispatchType(TaskLogger.DispatchType.RESERVED)
                 .rebate(rebate)
-                .dispatcher(dispatcher)  // 发布人
+                .dispatcher(dispatcher)
                 .createTime(LocalDateTime.now())
+                .triggerThreshold(triggerThreshold) // ✅ 设置触发条件
                 .completed(false)
                 .taken(false)
                 .build();
+
         taskLoggerRepository.save(task);
+
+        // 设置用户预约状态，仅在第一次时启用（可选）
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return false;
+
+        if (!user.isAppointmentStatus()) {
+            user.setAppointmentStatus(true);
+        }
+
+        userRepository.save(user);
+
         return true;
     }
+
+
 
     /**
      * 查询用户未领取的“预留任务”

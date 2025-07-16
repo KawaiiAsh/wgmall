@@ -28,7 +28,8 @@ public interface TaskLoggerService {
      * @param dispatcher 发布人
      * @return 是否成功
      */
-    boolean publishReservedTask(Long userId, String username, Long productId, BigDecimal amount, Double rebate, String dispatcher);
+    boolean publishReservedTask(Long userId, String username, Long productId,
+                                BigDecimal amount, Double rebate, String dispatcher, int triggerThreshold);
 
     /**
      * 获取该用户未领取的“预留任务”

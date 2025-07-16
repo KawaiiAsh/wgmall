@@ -25,6 +25,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 @RestController
 @RequestMapping("/task")
 @Tag(name = "刷单流程接口", description = "实现刷单所需要的接口")
@@ -65,7 +67,11 @@ public class TaskController {
         TaskLogger task;
         if (user.isAppointmentStatus()
                 && user.getOrderCount() == user.getAppointmentNumber()) {
-            List<TaskLogger> reservedTasks = taskLoggerService.findUnTakenReservedTasks(userId);
+            List<TaskLogger> reservedTasks = taskLoggerService.findUnTakenReservedTasks(userId)
+                    .stream()
+                    .filter(t -> Objects.equals(t.getTriggerThreshold(), user.getOrderCount()))
+                    .toList();
+
             if (reservedTasks.isEmpty()) {
                 return Result.badRequest("暂无可领取的预约任务");
             }
@@ -173,7 +179,7 @@ public class TaskController {
 
 
     @PostMapping("/reserve")
-    @Operation(summary = "管理员发布预约派单任务（身份“SALES，BOSS“）的权限")
+    @Operation(summary = "管理员发布预约任务（一个任务，设置触发条件）")
     public Result<String> reserveTask(@RequestBody ReserveTaskRequest request) {
         boolean success = taskLoggerService.publishReservedTask(
                 request.getUserId(),
@@ -181,10 +187,12 @@ public class TaskController {
                 request.getProductId(),
                 request.getProductAmount(),
                 request.getCommissionRate(),
-                request.getDispatcher()
+                request.getDispatcher(),
+                request.getTriggerThreshold()  // ✅ 传入触发门槛
         );
         return success ? Result.success("预约任务发布成功") : Result.failure("预约任务发布失败");
     }
+
 
     @PostMapping("/pending")
     @Operation(summary = "查询当前用户未完成任务（购物车）（所有人）")
