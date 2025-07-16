@@ -89,6 +89,7 @@ public class TaskController {
 
         }
 
+        task.setTaken(true);
         user.setOrderCount(user.getOrderCount() - 1);
         user.setBalance(user.getBalance().subtract(task.getProductAmount()));
         userRepository.save(user);
@@ -131,7 +132,7 @@ public class TaskController {
             }
 
             task.setCompleted(true);
-            task.setTaken(true);
+//            task.setTaken(true);
             task.setCompleteTime(LocalDateTime.now());
 
             double rebateRate = (task.getDispatchType() == TaskLogger.DispatchType.RESERVED)
