@@ -107,8 +107,11 @@ public class TaskController {
                 task.getProductName(),
                 task.getProductId(),
                 task.getProductAmount(),
-                task.getDispatchType()
+                task.getDispatchType(),
+                task.getRebateAmount(),
+                task.getProfit()
         );
+
 
 
         return Result.success(response);
@@ -146,12 +149,15 @@ public class TaskController {
                     : user.getRebate();
 
             BigDecimal rebateAmount = task.getProductAmount().multiply(BigDecimal.valueOf(rebateRate));
+            BigDecimal profit = task.getProductAmount().add(rebateAmount);
+
+            task.setRebateAmount(rebateAmount);
+            task.setProfit(profit);
 
             if (user.getBalance() == null) user.setBalance(BigDecimal.ZERO);
 
-            user.setBalance(user.getBalance()
-                    .add(task.getProductAmount())
-                    .add(rebateAmount));
+            user.setBalance(user.getBalance().add(profit));
+
 
             user.setTotalProfit(user.getTotalProfit().add(rebateAmount));
 
@@ -205,11 +211,13 @@ public class TaskController {
         }
         TaskResponse response = new TaskResponse(
                 task.getId(),
-                task.getProductImagePath(),  // ✅ 快照字段
-                task.getProductName(),       // ✅ 快照字段
+                task.getProductImagePath(),
+                task.getProductName(),
                 task.getProductId(),
                 task.getProductAmount(),
-                task.getDispatchType()
+                task.getDispatchType(),
+                task.getRebateAmount(),
+                task.getProfit()
         );
 
         return Result.success(response);
@@ -233,11 +241,13 @@ public class TaskController {
         List<TaskResponse> responses = completedTasksPage.getContent().stream().map(task ->
                 new TaskResponse(
                         task.getId(),
-                        task.getProductImagePath(),  // ✅ 使用快照字段
-                        task.getProductName(),       // ✅ 使用快照字段
+                        task.getProductImagePath(),
+                        task.getProductName(),
                         task.getProductId(),
                         task.getProductAmount(),
-                        task.getDispatchType()
+                        task.getDispatchType(),
+                        task.getRebateAmount(),
+                        task.getProfit()
                 )
         ).toList();
 

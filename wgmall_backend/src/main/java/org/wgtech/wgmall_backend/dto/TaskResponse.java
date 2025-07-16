@@ -17,4 +17,9 @@ public class TaskResponse {
     private Long productId;                 // 商品ID
     private BigDecimal productAmount;       // 商品金额
     private TaskLogger.DispatchType dispatchType;
+
+
+    // ✅ 新增字段
+    private BigDecimal rebateAmount;
+    private BigDecimal profit;
 }

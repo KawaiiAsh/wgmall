@@ -48,6 +48,15 @@ public class TaskLogger {
     @Enumerated(EnumType.STRING)
     private DispatchType dispatchType;
 
+    // 实际返点金额
+    @Column(precision = 10, scale = 2)
+    private BigDecimal rebateAmount;
+
+    // 用户这单赚到的总金额（商品金额 + 返点）
+    @Column(precision = 10, scale = 2)
+    private BigDecimal profit;
+
+
     private Double rebate;
 
     private String dispatcher;
@@ -65,6 +74,7 @@ public class TaskLogger {
 
     @Column(name = "trigger_threshold")
     private Integer triggerThreshold;  // ✅ 设置任务触发门槛（当 orderCount == 这个值时可领取）
+
 
 
 }
