@@ -18,7 +18,6 @@ import org.wgtech.wgmall_backend.utils.Result;
 
 @RestController
 @RequestMapping("/seller/shipping")
-@SecurityRequirement(name = "JWT")
 @RequiredArgsConstructor
 public class SellerShippingController {
 

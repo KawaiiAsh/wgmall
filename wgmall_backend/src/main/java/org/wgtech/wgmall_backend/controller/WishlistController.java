@@ -15,7 +15,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/wishlist")
 @RequiredArgsConstructor
-@SecurityRequirement(name = "JWT")
 @Tag(name = "心愿单接口", description = "用户心愿单增删查改相关操作")
 public class WishlistController {
 

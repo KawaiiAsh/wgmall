@@ -19,7 +19,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/seller")
-@SecurityRequirement(name = "JWT")
 @RequiredArgsConstructor
 public class SellerController {
 

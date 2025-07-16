@@ -21,7 +21,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/user")
-@SecurityRequirement(name = "JWT")
 @Tag(name = "用户接口", description = "用于操作用户数据的接口")
 public class UserController {
 
