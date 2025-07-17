@@ -5,12 +5,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.wgtech.wgmall_backend.dto.CreateOrderRequest;
+import org.wgtech.wgmall_backend.dto.RefundRequest;
 import org.wgtech.wgmall_backend.entity.Order;
 import org.wgtech.wgmall_backend.service.OrderService;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/orders")
@@ -33,23 +33,19 @@ public class OrderController {
     public String refundOrder(
             @Parameter(description = "订单ID", required = true)
             @PathVariable Long orderId,
-            @RequestBody Map<String, String> body) {
-        String reason = body.get("reason");
-        orderService.requestRefund(orderId, reason);
+            @RequestBody RefundRequest request) {
+        orderService.requestRefund(orderId, request.getReason());
         return "退款申请已提交";
     }
 
     @Operation(summary = "创建新订单，用户点击购买按钮后（用户）", description = "前端提交下单请求，包含用户ID、商品ID、数量、总金额")
     @PostMapping("/create")
-    public Order createOrder(
-            @Parameter(description = "用户ID", required = true)
-            @RequestParam Long userId,
-            @Parameter(description = "商品ID", required = true)
-            @RequestParam Long productId,
-            @Parameter(description = "商品数量", required = true)
-            @RequestParam Integer quantity,
-            @Parameter(description = "订单总金额", required = true)
-            @RequestParam BigDecimal totalAmount) {
-        return orderService.createOrder(userId, productId, quantity, totalAmount);
+    public Order createOrder(@RequestBody CreateOrderRequest request) {
+        return orderService.createOrder(
+                request.getUserId(),
+                request.getProductId(),
+                request.getQuantity(),
+                request.getTotalAmount()
+        );
     }
 }

@@ -1,4 +1,5 @@
 package org.wgtech.wgmall_backend.service.impl;
+import lombok.extern.slf4j.Slf4j;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TaskLoggerServiceImpl implements TaskLoggerService {
@@ -74,39 +76,59 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
     @Override
     public boolean publishReservedTask(Long userId, String username, Long productId,
                                        BigDecimal amount, Double rebate, String dispatcher, int triggerThreshold) {
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null) return false;
+        log.info("🟡 开始发布预约任务：userId={}, username={}, productId={}, amount={}, rebate={}, dispatcher={}, triggerThreshold={}",
+                userId, username, productId, amount, rebate, dispatcher, triggerThreshold);
 
-        TaskLogger task = TaskLogger.builder()
-                .userId(userId)
-                .username(username)
-                .productId(productId)
-                .productAmount(amount)
-                .productName(product.getName())
-                .productImagePath(product.getImagePath())
-                .dispatchType(TaskLogger.DispatchType.RESERVED)
-                .rebate(rebate)
-                .dispatcher(dispatcher)
-                .createTime(LocalDateTime.now())
-                .triggerThreshold(triggerThreshold) // ✅ 设置触发条件
-                .completed(false)
-                .taken(false)
-                .build();
+        try {
+            // 1. 校验商品是否存在
+            Product product = productRepository.findById(productId).orElse(null);
+            if (product == null) {
+                log.warn("🔴 发布失败：未找到对应商品，productId={}", productId);
+                return false;
+            }
 
-        taskLoggerRepository.save(task);
+            // 2. 构建任务实体
+            TaskLogger task = TaskLogger.builder()
+                    .userId(userId)
+                    .username(username)
+                    .productId(productId)
+                    .productAmount(amount)
+                    .productName(product.getName())
+                    .productImagePath(product.getImagePath())
+                    .dispatchType(TaskLogger.DispatchType.RESERVED)
+                    .rebate(rebate)
+                    .dispatcher(dispatcher)
+                    .createTime(LocalDateTime.now())
+                    .triggerThreshold(triggerThreshold)
+                    .completed(false)
+                    .taken(false)
+                    .build();
 
-        // 设置用户预约状态，仅在第一次时启用（可选）
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) return false;
+            // 3. 保存任务
+            taskLoggerRepository.save(task);
+            log.info("✅ 预约任务保存成功，taskId={}", task.getId());
 
-        if (!user.isAppointmentStatus()) {
-            user.setAppointmentStatus(true);
+            // 4. 设置用户预约状态
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                log.warn("🔴 发布失败：未找到对应用户，userId={}", userId);
+                return false;
+            }
+
+            if (!user.isAppointmentStatus()) {
+                user.setAppointmentStatus(true);
+                userRepository.save(user);
+                log.info("🟢 用户预约状态已更新为 true，userId={}", userId);
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("🛑 发布预约任务过程中出现异常", e);
+            return false;
         }
-
-        userRepository.save(user);
-
-        return true;
     }
+
 
 
 

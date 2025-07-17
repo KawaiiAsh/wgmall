@@ -8,6 +8,7 @@ import java.util.List;
 
 @Data
 public class SellerApplicationRequest {
+    private String username; // ✅ 新增字段
     private String shopName;
     private String shopDescription;
     private String businessPhone;

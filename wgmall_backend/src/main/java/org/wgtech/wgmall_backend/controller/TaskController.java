@@ -22,10 +22,7 @@ import org.wgtech.wgmall_backend.utils.Result;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
 @RequestMapping("/task")
@@ -48,56 +45,67 @@ public class TaskController {
     @Operation(summary = "执行抢单（用户）")
     public Result<TaskResponse> grabTask(@RequestBody GrabTaskRequest request) {
         Long userId = request.getUserId();
+
         if (grabTaskService.hasComplete(userId)) {
             return Result.badRequest("你还有未完成的任务，请先完成后再抢单");
         }
+
         if (!grabTaskService.hasGrabPermission(userId)) {
             return Result.badRequest("抢单人数过多，过于繁忙");
         }
+
         if (grabTaskService.getRemainingGrabTimes(userId) <= 0) {
             return Result.badRequest("你的抢单数量不够");
         }
 
-        User user = userRepository.findById(userId)
-                .orElse(null);
+        User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return Result.tokenInvalid("用户不存在或登录失效");
         }
 
-        TaskLogger task;
-        if (user.isAppointmentStatus()
-                && user.getOrderCount() == user.getAppointmentNumber()) {
-            List<TaskLogger> reservedTasks = taskLoggerService.findUnTakenReservedTasks(userId)
-                    .stream()
-                    .filter(t -> Objects.equals(t.getTriggerThreshold(), user.getOrderCount()))
-                    .toList();
+        Integer orderCount = user.getOrderCount() != null ? user.getOrderCount() : 0;
 
-            if (reservedTasks.isEmpty()) {
-                return Result.badRequest("暂无可领取的预约任务");
-            }
-            task = reservedTasks.get(0);
+        TaskLogger task;
+
+        // ✅ 优先查找匹配的预约任务
+        Optional<TaskLogger> optionalTask = taskLoggerRepository
+                .findFirstByUserIdAndDispatchTypeAndTakenFalseAndCompletedFalseAndTriggerThresholdOrderByTriggerThresholdAsc(
+                        userId,
+                        TaskLogger.DispatchType.RESERVED,
+                        orderCount
+                );
+
+        if (optionalTask.isPresent()) {
+            task = optionalTask.get();
             task.setTaken(true);
 
             if (taskLoggerService.countUnCompletedReservedTasks(userId) == 0) {
-                user.setAppointmentStatus(false);
+                user.setAppointmentNumber(null); // 可选：标记预约流程完成
             }
+
         } else {
-            task = taskLoggerService.publishRandomTask(
-                    user.getId(),
-                    user.getUsername(),
-                    user.getBalance()
-
-            );
-
+            // ⛔ 未找到匹配预约任务，fallback 到随机派单
+            task = taskLoggerService.publishRandomTask(userId, user.getUsername(), user.getBalance());
             if (task == null) {
                 return Result.badRequest("暂无适合您余额的商品，无法派发任务");
             }
-
         }
 
+        // ✅ 计算佣金和预期返还
+        double rebateRate = (task.getDispatchType() == TaskLogger.DispatchType.RESERVED)
+                ? task.getRebate()
+                : user.getRebate();
+
+        BigDecimal commission = task.getProductAmount().multiply(BigDecimal.valueOf(rebateRate));
+        BigDecimal expectReturn = task.getProductAmount().add(commission);
+
+        task.setCommission(commission);
+        task.setExpectReturn(expectReturn);
         task.setTaken(true);
-        user.setOrderCount(user.getOrderCount() - 1);
-        user.setBalance(user.getBalance().subtract(task.getProductAmount()));
+
+        user.setOrderCount(orderCount - 1);
+//        user.setBalance(user.getBalance().subtract(task.getProductAmount()));
+
         userRepository.save(user);
         taskLoggerService.save(task);
 
@@ -108,18 +116,20 @@ public class TaskController {
                 task.getProductId(),
                 task.getProductAmount(),
                 task.getDispatchType(),
-                task.getRebateAmount(),
-                task.getProfit()
+                task.getExpectReturn(),
+                task.getCommission()
         );
-
-
 
         return Result.success(response);
     }
 
+
+
+
+
     @PostMapping("/complete")
     @Transactional
-    public Result<String> completeTask(@RequestBody CompleteTaskRequest request) {
+    public Result<?> completeTask(@RequestBody CompleteTaskRequest request) {
         System.out.println("🟢 /task/complete 接口调用，taskId = " + request.getTaskId());
 
         try {
@@ -140,43 +150,47 @@ public class TaskController {
                 return Result.tokenInvalid("用户不存在或登录失效");
             }
 
+            BigDecimal productAmount = task.getProductAmount();
+            BigDecimal userBalance = user.getBalance() != null ? user.getBalance() : BigDecimal.ZERO;
+
+            // ✅ 校验余额是否足够返还
+            if (userBalance.compareTo(productAmount) < 0) {
+                BigDecimal shortage = productAmount.subtract(userBalance).setScale(2, BigDecimal.ROUND_HALF_UP);
+                InsufficientBalanceResponse response = new InsufficientBalanceResponse(
+                        productAmount.setScale(2, BigDecimal.ROUND_HALF_UP),
+                        userBalance.setScale(2, BigDecimal.ROUND_HALF_UP),
+                        shortage,
+                        task.getId()
+                );
+                return Result.custom(402, "余额不足", response); // ⚠️ 自定义 402 状态码用于余额不足提示
+            }
+
             task.setCompleted(true);
-//            task.setTaken(true);
             task.setCompleteTime(LocalDateTime.now());
 
-            double rebateRate = (task.getDispatchType() == TaskLogger.DispatchType.RESERVED)
-                    ? task.getRebate()
-                    : user.getRebate();
+            // ✅ 使用 expectReturn 和 commission 更新用户信息
+            user.setBalance(userBalance.add(task.getCommission()));
+            user.setTotalProfit(user.getTotalProfit().add(task.getCommission()));
 
-            BigDecimal rebateAmount = task.getProductAmount().multiply(BigDecimal.valueOf(rebateRate));
-            BigDecimal profit = task.getProductAmount().add(rebateAmount);
-
-            task.setRebateAmount(rebateAmount);
-            task.setProfit(profit);
-
-            if (user.getBalance() == null) user.setBalance(BigDecimal.ZERO);
-
-            user.setBalance(user.getBalance().add(profit));
-
-
-            user.setTotalProfit(user.getTotalProfit().add(rebateAmount));
-
+            // ✅ 预约任务已完成清空标识
             if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED &&
                     taskLoggerService.countUnCompletedReservedTasks(user.getId()) == 0) {
-                user.setAppointmentStatus(false);
+                user.setAppointmentNumber(null);
             }
 
             userRepository.save(user);
             taskLoggerService.save(task);
 
             System.out.println("✅ 任务完成成功");
-            return Result.success("任务完成，返利：" + rebateAmount + "，当前余额：" + user.getBalance());
+            return Result.success("任务完成，返利：" + task.getCommission() + "，当前余额：" + user.getBalance());
 
         } catch (Exception e) {
             e.printStackTrace();
             return Result.failure("任务完成失败，系统错误：" + e.getMessage());
         }
     }
+
+
 //    @GetMapping("/debug")
 //    public String debug(){
 //        return "Debug";
@@ -202,13 +216,16 @@ public class TaskController {
 
     @PostMapping("/pending")
     @Operation(summary = "查询当前用户未完成任务（购物车）（所有人）")
-    public Result<TaskResponse> getPendingTask(@RequestBody UserRequest request) {
-        TaskLogger task = taskLoggerService.findPendingTaskByUserId(request.getUserId())
-                .orElse(null);
+    public Result<List<TaskResponse>> getPendingTask(@RequestBody UserRequest request) {
+        Optional<TaskLogger> optionalTask = taskLoggerService.findPendingTaskByUserId(request.getUserId());
 
-        if (task == null) {
-            return Result.badRequest("你没有未完成的任务");
+        if (optionalTask.isEmpty()) {
+            // ✅ 返回空数组
+            return Result.success(Collections.emptyList());
         }
+
+        TaskLogger task = optionalTask.get();
+
         TaskResponse response = new TaskResponse(
                 task.getId(),
                 task.getProductImagePath(),
@@ -216,27 +233,22 @@ public class TaskController {
                 task.getProductId(),
                 task.getProductAmount(),
                 task.getDispatchType(),
-                task.getRebateAmount(),
-                task.getProfit()
+                task.getCommission(),
+                task.getExpectReturn()
         );
 
-        return Result.success(response);
+        return Result.success(List.of(response));
     }
+
 
     @PostMapping("/history")
     @Operation(summary = "查询当前用户已完成任务记录（分页，按完成时间倒序）（用户）")
-    public Result<Map<String, Object>> getCompletedTasks(
-            @RequestBody UserRequest request,
-            @RequestParam(defaultValue = "0") int page
-    ) {
+    public Result<Map<String, Object>> getCompletedTasks(@RequestBody UserRequest request) {
+        int page = request.getPage() != null ? request.getPage() : 0;
         int size = 10;
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "completeTime"));
 
         Page<TaskLogger> completedTasksPage = taskLoggerService.findCompletedTasksByUserId(request.getUserId(), pageable);
-
-        if (completedTasksPage.isEmpty()) {
-            return Result.badRequest("你还没有完成的任务记录");
-        }
 
         List<TaskResponse> responses = completedTasksPage.getContent().stream().map(task ->
                 new TaskResponse(
@@ -246,13 +258,11 @@ public class TaskController {
                         task.getProductId(),
                         task.getProductAmount(),
                         task.getDispatchType(),
-                        task.getRebateAmount(),
-                        task.getProfit()
+                        task.getCommission(),
+                        task.getExpectReturn()
                 )
         ).toList();
 
-
-        // 返回分页结构
         Map<String, Object> result = new HashMap<>();
         result.put("content", responses);
         result.put("totalPages", completedTasksPage.getTotalPages());
@@ -262,6 +272,7 @@ public class TaskController {
 
         return Result.success(result);
     }
+
 
 
 }

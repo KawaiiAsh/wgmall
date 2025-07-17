@@ -18,7 +18,7 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .info(new Info().title("WG Mall API").version("1.0"))
                 .servers(List.of(
-                        new Server().url("https://wgmall-production.up.railway.app") // ✅ 强制使用 https
+                        new Server().url("https://ga-rail-examining-undergraduate.trycloudflare.com") // ✅ 强制使用 https
                 ))
                 .addSecurityItem(new SecurityRequirement().addList("JWT"))
                 .components(new io.swagger.v3.oas.models.Components()

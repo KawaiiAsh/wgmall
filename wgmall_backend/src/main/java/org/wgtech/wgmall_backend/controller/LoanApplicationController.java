@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.wgtech.wgmall_backend.dto.LoanReviewRequest;
+import org.wgtech.wgmall_backend.dto.RepayRequest;
 import org.wgtech.wgmall_backend.entity.LoanApplication;
 import org.wgtech.wgmall_backend.entity.RepaymentLog;
 import org.wgtech.wgmall_backend.entity.User;
@@ -90,18 +92,15 @@ public class LoanApplicationController {
 
     @PostMapping("/admin/review")
     @Operation(summary = "后台：审核贷款申请（客服）")
-    public Result<String> reviewLoan(
-            @RequestParam Long loanId,
-            @RequestParam String decision,
-            @RequestParam(required = false) String remarks) {
-
-        LoanApplication loan = loanApplicationService.findById(loanId)
+    public Result<String> reviewLoan(@RequestBody LoanReviewRequest request) {
+        LoanApplication loan = loanApplicationService.findById(request.getLoanId())
                 .orElseThrow(() -> new IllegalArgumentException("贷款申请未找到"));
 
         if (!loan.getStatus().equals(LoanApplication.ApplicationStatus.PENDING)) {
             return Result.failure("该申请已审核，不能重复处理");
         }
 
+        String decision = request.getDecision();
         if ("APPROVE".equalsIgnoreCase(decision)) {
             loan.setStatus(LoanApplication.ApplicationStatus.APPROVED);
         } else if ("REJECT".equalsIgnoreCase(decision)) {
@@ -110,10 +109,11 @@ public class LoanApplicationController {
             return Result.failure("无效的审核决策");
         }
 
-        loan.setReviewRemarks(remarks);
+        loan.setReviewRemarks(request.getRemarks());
         loanApplicationService.save(loan);
         return Result.success("审核成功");
     }
+
 
     /**
      * 用户还款
@@ -124,39 +124,30 @@ public class LoanApplicationController {
      */
     @PostMapping("/repay")
     @Operation(summary = "用户还款(用户）")
-    public Result<String> repayLoan(@RequestParam Long userId, @RequestParam BigDecimal amount) {
+    public Result<String> repayLoan(@RequestBody RepayRequest request) {
         try {
-            // 获取用户信息
-            User user = userRepository.findById(userId)
+            User user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new IllegalArgumentException("用户未找到"));
 
-            // 检查是否有欠款
             if (user.getDebtAmount() == null || user.getDebtAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 return Result.failure("用户当前无欠款");
             }
 
-            // 检查还款金额是否大于欠款
-            if (amount.compareTo(user.getDebtAmount()) > 0) {
+            if (request.getAmount().compareTo(user.getDebtAmount()) > 0) {
                 return Result.failure("还款金额不能大于欠款金额");
             }
 
-            // 执行还款逻辑
-            BigDecimal updatedDebt = user.getDebtAmount().subtract(amount);
+            BigDecimal updatedDebt = user.getDebtAmount().subtract(request.getAmount());
             user.setDebtAmount(updatedDebt);
-
-            // 可选：记录还款流水或变动日志
-
-            // 保存更新
             userRepository.save(user);
 
             RepaymentLog log = RepaymentLog.builder()
                     .user(user)
-                    .amount(amount)
+                    .amount(request.getAmount())
                     .repaymentTime(new Date())
-                    .operatedBy("用户自助") // 或从 token 获取当前登录用户名
+                    .operatedBy("用户自助")
                     .remarks("用户主动还款")
                     .build();
-
             repaymentLogRepository.save(log);
 
             return Result.success("还款成功，剩余欠款：" + updatedDebt);
@@ -164,6 +155,7 @@ public class LoanApplicationController {
             return Result.failure("还款失败: " + e.getMessage());
         }
     }
+
 
 
 }

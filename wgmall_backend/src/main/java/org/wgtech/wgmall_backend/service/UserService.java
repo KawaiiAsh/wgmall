@@ -1,6 +1,7 @@
 package org.wgtech.wgmall_backend.service;
 
 import org.springframework.data.domain.Page;
+import org.wgtech.wgmall_backend.dto.WithdrawalRequest;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.utils.Result;
 
@@ -92,4 +93,8 @@ public interface UserService {
 
     boolean changePasswordByUsername(String username, String newPassword);
 
+    void submitWithdrawal(WithdrawalRequest request);
+    void approveWithdrawal(Long withdrawalId);
+
+    void rejectWithdrawal(Long withdrawalId, String reason);
 }

@@ -1,13 +1,13 @@
 package org.wgtech.wgmall_backend.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.dto.SellerApplicationRequest;
 import org.wgtech.wgmall_backend.entity.SellerApplication;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.repository.SellerApplicationRepository;
 import org.wgtech.wgmall_backend.repository.UserRepository;
+import org.wgtech.wgmall_backend.utils.Result;
 
 import java.util.Date;
 
@@ -19,15 +19,17 @@ public class SellerApplicationController {
     private final SellerApplicationRepository applicationRepository;
     private final UserRepository userRepository;
 
-    @PostMapping
-    public ResponseEntity<?> apply(@RequestParam String username,
-                                   @RequestBody SellerApplicationRequest request) {
+    @PostMapping("/apply")
+    public Result<String> apply(@RequestBody SellerApplicationRequest request) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElse(null);
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        if (user == null) {
+            return Result.badRequest("用户不存在");
+        }
 
         if (applicationRepository.existsByUserId(user.getId())) {
-            return ResponseEntity.badRequest().body("你已经提交过申请");
+            return Result.badRequest("你已经提交过申请");
         }
 
         SellerApplication application = SellerApplication.builder()
@@ -45,6 +47,7 @@ public class SellerApplicationController {
                 .build();
 
         applicationRepository.save(application);
-        return ResponseEntity.ok("申请已提交");
+        return Result.success("申请已提交");
     }
+
 }

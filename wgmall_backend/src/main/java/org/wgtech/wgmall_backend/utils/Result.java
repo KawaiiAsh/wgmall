@@ -80,4 +80,13 @@ public class Result<T> {
         private long totalItems;
         private int pageSize;
     }
+
+    public boolean isSuccess() {
+        return this.code == 200;
+    }
+
+    public boolean isFailure() {
+        return !isSuccess();
+    }
+
 }

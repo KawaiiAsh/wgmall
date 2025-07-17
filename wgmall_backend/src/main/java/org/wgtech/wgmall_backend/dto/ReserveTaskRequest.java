@@ -16,7 +16,7 @@ public class ReserveTaskRequest {
     private BigDecimal productAmount;
     private Double commissionRate;
     private String dispatcher;
-    private int triggerThreshold; // ✅ 触发条件（例如：orderCount == 2 时触发）
+    private Integer  triggerThreshold; // ✅ 触发条件（例如：orderCount == 2 时触发）
 
     // Getter / Setter
 }

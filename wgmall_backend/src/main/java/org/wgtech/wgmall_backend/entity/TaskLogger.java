@@ -48,13 +48,13 @@ public class TaskLogger {
     @Enumerated(EnumType.STRING)
     private DispatchType dispatchType;
 
-    // 实际返点金额
+    // ✅ 抢单时就计算好的：实际赚的钱（返点）
     @Column(precision = 10, scale = 2)
-    private BigDecimal rebateAmount;
+    private BigDecimal commission;
 
-    // 用户这单赚到的总金额（商品金额 + 返点）
+    // ✅ 抢单时就计算好的：总返还金额（商品金额 + 返点）
     @Column(precision = 10, scale = 2)
-    private BigDecimal profit;
+    private BigDecimal expectReturn;
 
 
     private Double rebate;

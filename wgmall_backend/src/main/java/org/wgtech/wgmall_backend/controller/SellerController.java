@@ -1,6 +1,8 @@
 package org.wgtech.wgmall_backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/seller")
 @RequiredArgsConstructor
+@Tag(name = "卖家接口", description = "卖家管理店铺、商品、进货的相关接口")
 public class SellerController {
 
     private final UserRepository userRepository;
@@ -30,6 +33,7 @@ public class SellerController {
     /**
      * 获取我的店铺信息
      */
+    @Operation(summary = "获取我的店铺信息", description = "根据用户名返回对应卖家的店铺信息。用户必须为卖家身份。")
     @GetMapping("/me/shop")
     public Result<Shop> getMyShop(@RequestParam String username) {
         User user = userRepository.findByUsername(username)
@@ -45,6 +49,7 @@ public class SellerController {
     /**
      * 获取可上架的商品（根据主营分类）
      */
+    @Operation(summary = "获取可上架商品", description = "根据卖家店铺的主营类型，分页获取平台中可上架的商品列表。")
     @GetMapping("/me/shop/candidates")
     public Result<List<Product>> getCandidateProducts(@RequestParam String username,
                                                       @RequestParam(defaultValue = "0") int page,
@@ -69,6 +74,7 @@ public class SellerController {
     /**
      * 批量上架商品
      */
+    @Operation(summary = "批量上架商品", description = "将多个商品以指定价格上架到卖家的店铺中。需提供商品 ID 和售价。")
     @PostMapping("/me/shop/list")
     public Result<String> listProducts(@RequestBody ListingRequest req) {
         User user = userRepository.findByUsername(req.getUsername())
@@ -106,6 +112,7 @@ public class SellerController {
 
     private final PurchaseRequestRepository purchaseRequestRepository;
 
+    @Operation(summary = "支付进货请求", description = "卖家为待付款的进货请求付款。系统将校验余额是否足够并更新状态。")
     @PostMapping("/purchase-requests/pay")
     @Transactional
     public Result<String> payForPurchaseRequests(@RequestBody PayRequestDTO dto) {

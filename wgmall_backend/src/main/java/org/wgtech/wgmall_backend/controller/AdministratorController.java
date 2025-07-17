@@ -7,21 +7,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
+import org.wgtech.wgmall_backend.dto.AdminRechargeRequest;
+import org.wgtech.wgmall_backend.dto.AdminWithdrawalRequest;
 import org.wgtech.wgmall_backend.dto.CreatePurchaseRequest;
 import org.wgtech.wgmall_backend.dto.CreateSalesRequest;
 import org.wgtech.wgmall_backend.entity.*;
-import org.wgtech.wgmall_backend.repository.ListedProductRepository;
-import org.wgtech.wgmall_backend.repository.PurchaseRequestRepository;
-import org.wgtech.wgmall_backend.repository.ShopRepository;
+import org.wgtech.wgmall_backend.repository.*;
 import org.wgtech.wgmall_backend.service.AdministratorService;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.SalespersonCreator;
 import org.wgtech.wgmall_backend.utils.Result;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @RestController // 声明这是一个 REST 控制器，返回值默认以 JSON 形式响应
 @RequestMapping("/administrator") // 设置请求路径前缀为 /administrator
@@ -43,6 +46,14 @@ public class AdministratorController {
     @Autowired
     private PurchaseRequestRepository purchaseRequestRepository;
 
+    @Autowired
+    private RechargeRecordRepository rechargeRecordRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private WithdrawalRecordRepository withdrawalRecordRepository;
     /**
      * 创建业务员账号
      *
@@ -221,5 +232,60 @@ public class AdministratorController {
         return Result.success(pageResult.getContent(), pagination);
     }
 
+    @PostMapping("/recharge-record/add")
+    @Operation(summary = "客服手动添加用户充值记录", description = "手动为指定用户添加充值金额、备注和充值日期（格式为 yyyy-MM-dd）")
+    public Result<String> addRechargeByAdmin(@RequestBody AdminRechargeRequest request) {
+        Optional<User> optionalUser = userRepository.findById(request.getUserId());
+
+        if (optionalUser.isEmpty()) {
+            return Result.notFound("用户不存在");
+        }
+
+        Date parsedDate;
+        try {
+            parsedDate = new SimpleDateFormat("yyyy-MM-dd").parse(request.getRechargeDate());
+        } catch (ParseException e) {
+            return Result.badRequest("日期格式错误，应为 yyyy-MM-dd");
+        }
+
+        RechargeRecord record = RechargeRecord.builder()
+                .user(optionalUser.get())
+                .amount(request.getAmount())
+                .remark(request.getRemark())
+                .rechargeTime(parsedDate)
+                .build();
+
+        rechargeRecordRepository.save(record);
+
+        return Result.success("客服手动充值记录添加成功");
+    }
+
+    @PostMapping("/withdrawal-record/add")
+    @Operation(summary = "客服手动添加用户提现记录", description = "手动为指定用户添加提现金额、备注和日期（格式为 yyyy-MM-dd）")
+    public Result<String> addWithdrawalByAdmin(@RequestBody AdminWithdrawalRequest request) {
+        Optional<User> optionalUser = userRepository.findById(request.getUserId());
+
+        if (optionalUser.isEmpty()) {
+            return Result.notFound("用户不存在");
+        }
+
+        Date parsedDate;
+        try {
+            parsedDate = new SimpleDateFormat("yyyy-MM-dd").parse(request.getWithdrawalDate());
+        } catch (ParseException e) {
+            return Result.badRequest("日期格式错误，应为 yyyy-MM-dd");
+        }
+
+        WithdrawalRecord record = WithdrawalRecord.builder()
+                .user(optionalUser.get())
+                .amount(request.getAmount())
+                .remark(request.getRemark())
+                .withdrawalTime(parsedDate)
+                .build();
+
+        withdrawalRecordRepository.save(record);
+
+        return Result.success("客服手动提现记录添加成功");
+    }
 
 }

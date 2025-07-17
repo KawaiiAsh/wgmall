@@ -1,5 +1,6 @@
 package org.wgtech.wgmall_backend.repository;
 
+import org.apache.tomcat.util.net.DispatchType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -64,5 +65,13 @@ public interface TaskLoggerRepository extends JpaRepository<TaskLogger, Long> {
 
     Page<TaskLogger> findByUserIdAndCompletedTrue(Long userId, Pageable pageable);
 
+    List<TaskLogger> findByUserIdAndCompletedFalse(Long userId);
+
+    // 找到第一个匹配的预约任务（未领取，未完成，触发门槛满足）
+    Optional<TaskLogger> findFirstByUserIdAndDispatchTypeAndTakenFalseAndCompletedFalseAndTriggerThresholdOrderByTriggerThresholdAsc(
+            Long userId,
+            TaskLogger.DispatchType dispatchType,
+            Integer triggerThreshold
+    );
 
 }

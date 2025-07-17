@@ -19,7 +19,6 @@ public class TaskResponse {
     private TaskLogger.DispatchType dispatchType;
 
 
-    // ✅ 新增字段
-    private BigDecimal rebateAmount;
-    private BigDecimal profit;
+    private BigDecimal expectReturn;  // 总返还
+    private BigDecimal commission;    // 实际赚
 }

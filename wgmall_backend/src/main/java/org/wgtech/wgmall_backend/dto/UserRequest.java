@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @Data
 public class UserRequest {
     private Long userId;
-    // Getter / Setter
+    private Integer page = 0; // 默认第0页
 }

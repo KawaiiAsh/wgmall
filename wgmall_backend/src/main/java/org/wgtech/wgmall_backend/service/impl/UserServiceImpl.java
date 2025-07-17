@@ -5,13 +5,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.wgtech.wgmall_backend.dto.WithdrawalRequest;
 import org.wgtech.wgmall_backend.entity.Administrator;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.entity.UserRedBad;
-import org.wgtech.wgmall_backend.repository.AdministratorRepository;
-import org.wgtech.wgmall_backend.repository.TaskLoggerRepository;
-import org.wgtech.wgmall_backend.repository.UserRedBadRepository;
-import org.wgtech.wgmall_backend.repository.UserRepository;
+import org.wgtech.wgmall_backend.entity.WithdrawalRecord;
+import org.wgtech.wgmall_backend.repository.*;
 import org.wgtech.wgmall_backend.service.UserService;
 import org.wgtech.wgmall_backend.utils.InviteCodeGenerator;
 import org.wgtech.wgmall_backend.utils.IpLocationDetector;
@@ -47,6 +46,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRedBadRepository userRedBadRepository;
 
+    @Autowired
+    private WithdrawalRecordRepository withdrawalRecordRepository;
     /**
      * 用户注册
      */
@@ -267,13 +268,14 @@ public class UserServiceImpl implements UserService {
     public Result<User> getUserInfoById(Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
-            return Result.failure("用户不存在");
+            return Result.badRequest("用户不存在");
         }
 
         User user = userOpt.get();
-        user.setPassword(null); // 避免暴露密码等敏感字段
+        user.setPassword(null); // 清除敏感字段
         return Result.success(user);
     }
+
 
     /**
      * 根据用户id设置返点
@@ -380,6 +382,70 @@ public class UserServiceImpl implements UserService {
             return true;
         }
         return false;
+    }
+
+    @Override
+    @Transactional
+    public void submitWithdrawal(WithdrawalRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+
+        if (request.getAmount().compareTo(user.getBalance()) > 0) {
+            throw new IllegalArgumentException("余额不足");
+        }
+
+        WithdrawalRecord record = WithdrawalRecord.builder()
+                .user(user)
+                .username(request.getUsername())
+                .amount(request.getAmount())
+                .method(request.getMethod())
+                .address(request.getAddress())
+                .withdrawalTime(new Date())
+                .status("PENDING")
+                .build();
+
+        withdrawalRecordRepository.save(record);
+    }
+
+    @Override
+    @Transactional
+    public void approveWithdrawal(Long withdrawalId) {
+        WithdrawalRecord record = withdrawalRecordRepository.findById(withdrawalId)
+                .orElseThrow(() -> new IllegalArgumentException("记录未找到"));
+
+        if (!"PENDING".equals(record.getStatus())) {
+            throw new IllegalStateException("该记录已审核");
+        }
+
+        User user = record.getUser();
+        if (record.getAmount().compareTo(user.getBalance()) > 0) {
+            throw new IllegalArgumentException("用户余额不足，无法完成提现");
+        }
+
+        // 扣除余额
+        user.setBalance(user.getBalance().subtract(record.getAmount()));
+        userRepository.save(user);
+
+        // 更新记录
+        record.setStatus("APPROVED");
+        record.setReviewTime(new Date());
+        withdrawalRecordRepository.save(record);
+    }
+
+    @Override
+    @Transactional
+    public void rejectWithdrawal(Long withdrawalId, String reason) {
+        WithdrawalRecord record = withdrawalRecordRepository.findById(withdrawalId)
+                .orElseThrow(() -> new IllegalArgumentException("记录未找到"));
+
+        if (!"PENDING".equals(record.getStatus())) {
+            throw new IllegalStateException("该记录已审核");
+        }
+
+        record.setStatus("REJECTED");
+        record.setRemark(reason);
+        record.setReviewTime(new Date());
+        withdrawalRecordRepository.save(record);
     }
 
 

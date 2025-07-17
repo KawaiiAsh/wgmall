@@ -2,6 +2,7 @@ package org.wgtech.wgmall_backend.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.wgtech.wgmall_backend.entity.TaskLogger;
 import org.wgtech.wgmall_backend.entity.User;
 import org.wgtech.wgmall_backend.repository.TaskLoggerRepository;
 import org.wgtech.wgmall_backend.repository.UserRepository;
@@ -54,12 +55,36 @@ public class GrabTaskServiceImpl implements GrabTaskService {
      */
     @Override
     public boolean hasComplete(Long userId) {
-        return taskLoggerRepository.existsByUserIdAndCompletedFalse(userId);
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) return false;
+
+        int currentOrderCount = userOpt.get().getOrderCount();
+
+        return taskLoggerRepository.findByUserIdAndCompletedFalse(userId).stream()
+                .anyMatch(task -> {
+                    // 1. 已领取但没完成，一定是未完成任务
+                    if (task.isTaken()) return true;
+
+                    // 2. 如果是预约任务，且未领取，但还未到触发门槛，不算未完成
+                    if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED) {
+                        Integer threshold = task.getTriggerThreshold();
+                        // ✅ 只有在任务被“触发”后（即达到门槛）+ “已领取”才该算
+                        return false; // ✅ 未领取的预约任务永远不算“未完成”
+                    }
+
+                    // 3. 其他情况（未领取的随机任务）也不算未完成
+                    return false;
+                });
     }
+
+
+
+
+
 
     /**
      * 判断是否应该触发“预约订单”逻辑
-     *
+     * <p>
      * 逻辑：
      * - 用户处于预约状态
      * - 当前抢单数已等于预约数量
