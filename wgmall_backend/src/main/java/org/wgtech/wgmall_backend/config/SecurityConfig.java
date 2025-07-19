@@ -32,13 +32,17 @@ public class SecurityConfig {
                         "/auth/login",
                         "/auth/register",
                         "/auth/login-admin",
+                        "/auth/login-boss",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/webjars/**",
-                        "/uploads/products/**",
+                        "/uploads/**",
                         "/products/random",
-                        "/products/type").permitAll()
+                        "/products/random/type"
+                ).permitAll()
+
+
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

@@ -96,14 +96,14 @@ public class UserServiceImpl implements UserService {
                     .superiorUsername(superiorUsername)
                     .ip(ip)
                     .orderCount(0)
-                    .isBanned(false)
+                    .banned(false)
                     .balance(BigDecimal.ZERO)
                     .noneUsefulBalance(BigDecimal.ZERO)
                     .debtAmount(BigDecimal.ZERO)
                     .toggle(false)
                     .canWithdraw(false)
-                    .appointmentStatus(false)
-                    .appointmentNumber(null)
+//                    .appointmentStatus(false)
+//                    .appointmentNumber(null)
                     .country(country)
                     .registerTime(new Date())
                     .lastLoginTime(new Date())
@@ -113,6 +113,7 @@ public class UserServiceImpl implements UserService {
                     .rebate(0.006) // 默认返利
                     .redBagDrawCount(0)
                     .redBagCount(0)
+                    .hasUnreadMessages(false)
                     .build();
 
             // 6. 保存用户
@@ -183,44 +184,48 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public Result<User> addMoney(Long userId, double amount) {
+        if (amount <= 0) {
+            return Result.failure("加钱金额必须大于 0");
+        }
+
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isEmpty()) {
             return Result.failure("用户ID不存在");
         }
 
         User user = optionalUser.get();
-
-        // 修复：把 double 转换成 BigDecimal
         BigDecimal added = BigDecimal.valueOf(amount);
+
         user.setBalance(user.getBalance().add(added));
         userRepository.save(user);
 
         return Result.success(user);
     }
 
+
     /**
      * 扣除用户余额
      */
     @Override
     public Result<User> minusMoney(Long userId, double amount) {
+        if (amount <= 0) {
+            return Result.failure("扣除金额必须大于 0");
+        }
+
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isEmpty()) {
             return Result.failure("用户ID不存在");
         }
 
         User user = optionalUser.get();
-
-        // 修复：转换为 BigDecimal 并判断余额
         BigDecimal subtract = BigDecimal.valueOf(amount);
-        if (user.getBalance().compareTo(subtract) < 0) {
-            return Result.failure("余额不足");
-        }
 
         user.setBalance(user.getBalance().subtract(subtract));
         userRepository.save(user);
 
         return Result.success(user);
     }
+
 
 
     /**
@@ -448,6 +453,26 @@ public class UserServiceImpl implements UserService {
         withdrawalRecordRepository.save(record);
     }
 
+    @Override
+    public void setUserBannedStatus(long userId, boolean banned) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        user.setBanned(banned);
+        userRepository.save(user);
+    }
 
+    @Override
+    public void setCanWithdraw(Long userId, boolean canWithdraw) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+        user.setCanWithdraw(canWithdraw);
+        userRepository.save(user);
+    }
+
+    @Override
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElse(null); // 或者抛异常
+    }
 
 }

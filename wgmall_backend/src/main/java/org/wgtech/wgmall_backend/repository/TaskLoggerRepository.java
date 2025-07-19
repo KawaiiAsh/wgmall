@@ -74,4 +74,11 @@ public interface TaskLoggerRepository extends JpaRepository<TaskLogger, Long> {
             Integer triggerThreshold
     );
 
+    Optional<TaskLogger> findFirstByUserIdAndDispatchTypeAndTriggerThresholdAndCompletedFalse(
+            Long userId, TaskLogger.DispatchType dispatchType, int triggerThreshold);
+
+    Page<TaskLogger> findByDispatchType(TaskLogger.DispatchType type, Pageable pageable);
+    Page<TaskLogger> findByUsernameAndCompletedTrueOrderByCompleteTimeDesc(String username, Pageable pageable);
+    Page<TaskLogger> findByUsernameOrderByCompleteTimeDesc(String username, Pageable pageable);
+
 }

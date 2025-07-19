@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.jaxb.SpringDataJaxb;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.dto.*;
 import org.wgtech.wgmall_backend.entity.Product;
@@ -171,11 +172,14 @@ public class TaskController {
             // ✅ 使用 expectReturn 和 commission 更新用户信息
             user.setBalance(userBalance.add(task.getCommission()));
             user.setTotalProfit(user.getTotalProfit().add(task.getCommission()));
+            user.setTotalOrderCount(user.getTotalOrderCount() + 1);
 
             // ✅ 预约任务已完成清空标识
             if (task.getDispatchType() == TaskLogger.DispatchType.RESERVED &&
                     taskLoggerService.countUnCompletedReservedTasks(user.getId()) == 0) {
                 user.setAppointmentNumber(null);
+                user.setAppointmentStatus(false); // ✅ 增加这行代码，清除状态
+
             }
 
             userRepository.save(user);
@@ -201,17 +205,17 @@ public class TaskController {
     @PostMapping("/reserve")
     @Operation(summary = "管理员发布预约任务（一个任务，设置触发条件）")
     public Result<String> reserveTask(@RequestBody ReserveTaskRequest request) {
-        boolean success = taskLoggerService.publishReservedTask(
+        return taskLoggerService.publishReservedTask(
                 request.getUserId(),
                 request.getUsername(),
                 request.getProductId(),
                 request.getProductAmount(),
                 request.getCommissionRate(),
                 request.getDispatcher(),
-                request.getTriggerThreshold()  // ✅ 传入触发门槛
+                request.getTriggerThreshold()
         );
-        return success ? Result.success("预约任务发布成功") : Result.failure("预约任务发布失败");
     }
+
 
 
     @PostMapping("/pending")
@@ -272,6 +276,85 @@ public class TaskController {
 
         return Result.success(result);
     }
+
+    @PostMapping("/admin/all-tasks")
+    @Operation(summary = "分页查找所有刷单日志（按照创建时间倒序）")
+    public Result<Map<String, Object>> getAllTasks(@RequestBody PageRequestDto requestDto) {
+        int page = requestDto.getPage() != null ? requestDto.getPage() : 0;
+        int size = requestDto.getSize() != null ? requestDto.getSize() : 10;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        Page<TaskLogger> taskPage = taskLoggerService.findAllTasks(pageable);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", taskPage.getContent()); // ✅ 直接返回实体列表
+        result.put("totalPages", taskPage.getTotalPages());
+        result.put("totalElements", taskPage.getTotalElements());
+        result.put("currentPage", page);
+        result.put("last", taskPage.isLast());
+
+        return Result.success(result);
+    }
+
+    @PostMapping("/admin/random-tasks")
+    @Operation(summary = "分页查找所有随机派单任务（RANDOM）")
+    public Result<Map<String, Object>> getRandomTasks(@RequestBody PageRequestDto requestDto) {
+        return getTasksByType(TaskLogger.DispatchType.RANDOM, requestDto);
+    }
+
+    @PostMapping("/admin/reserved-tasks")
+    @Operation(summary = "分页查找所有预约派单任务（RESERVED）")
+    public Result<Map<String, Object>> getReservedTasks(@RequestBody PageRequestDto requestDto) {
+        return getTasksByType(TaskLogger.DispatchType.RESERVED, requestDto);
+    }
+
+    private Result<Map<String, Object>> getTasksByType(TaskLogger.DispatchType type, PageRequestDto requestDto) {
+        int page = requestDto.getPage() != null ? requestDto.getPage() : 0;
+        int size = requestDto.getSize() != null ? requestDto.getSize() : 10;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        Page<TaskLogger> taskPage = taskLoggerService.findByDispatchType(type, pageable);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", taskPage.getContent());
+        result.put("totalPages", taskPage.getTotalPages());
+        result.put("totalElements", taskPage.getTotalElements());
+        result.put("currentPage", page);
+        result.put("last", taskPage.isLast());
+
+        return Result.success(result);
+    }
+
+    @PostMapping("/admin/tasks-by-user")
+    @Operation(summary = "根据用户名查询该用户的所有任务完成记录（分页）")
+    public Result<Map<String, Object>> getTasksByUsername(@RequestBody AdminUserTaskQueryRequest request) {
+        if (request.getUsername() == null || request.getUsername().isBlank()) {
+            return Result.badRequest("必须提供用户名");
+        }
+
+        Optional<User> optionalUser = userRepository.findByUsername(request.getUsername());
+        if (optionalUser.isEmpty()) {
+            return Result.badRequest("未找到匹配的用户");
+        }
+
+        User user = optionalUser.get();
+
+        int page = request.getPage() != null ? request.getPage() : 0;
+        int size = request.getSize() != null ? request.getSize() : 10;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "completeTime"));
+
+        Page<TaskLogger> taskPage = taskLoggerService.findTasksByUsername(user.getUsername(), pageable);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", taskPage.getContent());
+        result.put("totalPages", taskPage.getTotalPages());
+        result.put("totalElements", taskPage.getTotalElements());
+        result.put("currentPage", page);
+        result.put("last", taskPage.isLast());
+
+        return Result.success(result);
+    }
+
 
 
 

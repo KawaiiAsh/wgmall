@@ -14,46 +14,55 @@ import java.time.LocalDateTime;
 @Builder
 public class Order {
 
-    public enum RefundStatus {
-        REFUNDABLE,  // 可退款
-        REFUNDING    // 用户申请后
+    public enum OrderStatus {
+        PENDING,
+        PROCESSING,
+        SHIPPED,
+        WAREHOUSE,
+        TRANSPORTING,
+        DELIVERED,
+        COMPLETED,
+        REFUNDABLE,   // 表示可退款状态
+        REFUNDING,    // 表示正在退款中
+        REFUNDED      // 可新增此状态以明确表示已退款
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 下单用户
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "buyer_id")
+    private User buyer;
 
-    // 下单商品
+    private Long userId;
+
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "shop_id")
+    private Shop shop;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
     private Product product;
 
-    // 商品数量
-    @Column(nullable = false)
     private Integer quantity;
 
-    // 总金额
-    @Column(nullable = false)
     private BigDecimal totalAmount;
 
-    // 固定发货状态
-    @Column(nullable = false)
-    private String shipStatus = "Processing";
+    private BigDecimal totalWholesale;
 
-    // 可退款 or 退款中
+    private BigDecimal totalSale;
+
+    private BigDecimal totalProfit;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RefundStatus refundStatus = RefundStatus.REFUNDABLE;
+    private OrderStatus status;
 
-    // 用户填写的退款理由
+    // 可选字段：用于记录退款原因
     private String refundReason;
 
-    // 创建时间
+    private String customerName;
+
     private LocalDateTime createdAt;
 
     @PrePersist

@@ -88,7 +88,7 @@ public class User {
 
     @NotNull(message = "封禁状态不能为空")
     @Schema(description = "是否被封禁")
-    private boolean isBanned;
+    private boolean banned;
 
     @NotNull(message = "资金密码不能为空")
     @Schema(description = "资金密码，不能为空")
@@ -159,5 +159,9 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @Schema(description = "贷款申请记录")
     private LoanApplication loanApplication;
+
+    @NotNull(message = "是否有未读消息")
+    @Schema(description = "是否有未读站内信")
+    private boolean hasUnreadMessages;
 
 }

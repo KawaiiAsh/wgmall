@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import javax.validation.constraints.NotNull;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -18,16 +18,30 @@ public class Message {
     private Long id;
 
     @NotNull
-    private Long senderId;  // 发送者ID
+    private Long senderId;
 
     @NotNull
-    private String receiverUsername;  // 接收者username
+    private String senderUsername;
 
     @NotNull
-    private String content;  // 站内信内容
-
-    private boolean isRead;  // 是否已读
+    private String senderNickname;
 
     @NotNull
-    private Date sendTime;  // 发送时间
+    private Long receiverId;
+
+    @NotNull
+    private String receiverUsername;
+
+    @NotNull
+    private String content;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;  // 用作发送时间
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

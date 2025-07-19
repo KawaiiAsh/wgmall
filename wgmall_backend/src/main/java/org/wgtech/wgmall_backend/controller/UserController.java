@@ -1,12 +1,10 @@
 package org.wgtech.wgmall_backend.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.dto.*;
 import org.wgtech.wgmall_backend.entity.RechargeRecord;
@@ -27,6 +25,7 @@ import java.util.stream.Collectors;
  * 用户操作控制器
  * 包含：加钱、扣钱、设置抢单资格与次数
  */
+@Slf4j
 @RestController
 @RequestMapping("/user")
 @Tag(name = "用户接口", description = "用于操作用户数据的接口")
@@ -66,11 +65,22 @@ public class UserController {
         return userService.minusMoney(request.getUserId(), request.getAmount());
     }
 
-    @PostMapping("/set-grab-eligibility")
-    @Operation(summary = "设置用户抢单资格（身份“SALES，BOSS“的权限）")
-    public Result<User> setGrabEligibility(@RequestBody GrabEligibilityRequest request) {
-        return userService.setGrabOrderEligibility(request.getUserId(), request.isEligible());
+    @PostMapping("/set-grab-toggle")
+    @Operation(summary = "设置用户抢单开关（身份“SALES，BOSS“的权限）")
+    public Result<User> setGrabToggle(@RequestBody GrabToggleRequest request) {
+        try {
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+
+            user.setToggle(request.isToggle());
+            userRepository.save(user);
+
+            return Result.success(user);
+        } catch (Exception e) {
+            return Result.failure("设置抢单开关失败：" + e.getMessage());
+        }
     }
+
 
     @PostMapping("/set-grab-times")
     @Operation(summary = "设置用户抢单次数（身份“SALES，BOSS“的权限）")
@@ -228,32 +238,40 @@ public class UserController {
     }
 
     @GetMapping("/user-detail/{userId}")
-    @Operation(summary = "获取指定用户的详细信息（包含基本信息和盈利统计，身份“BUYER，SALER“的权限）")
+    @Operation(summary = "获取指定用户的详细信息（包含基本信息和盈利统计）")
     public Result<Map<String, Object>> getUserDetail(@PathVariable Long userId) {
-        // 获取用户信息
-        Result<User> userInfoResult = userService.getUserInfoById(userId);
-        if (!userInfoResult.isSuccess() || userInfoResult.getData() == null) {
-            return Result.failure("用户信息获取失败");
+        try {
+            log.info("获取用户详情，userId = {}", userId);
+
+            Result<User> userInfoResult = userService.getUserInfoById(userId);
+            if (!userInfoResult.isSuccess() || userInfoResult.getData() == null) {
+                log.warn("未找到用户，userId = {}", userId);
+                return Result.failure("用户信息获取失败");
+            }
+
+            BigDecimal today = userService.getTodayProfit(userId);
+            BigDecimal yesterday = userService.getYesterdayProfit(userId);
+            BigDecimal total = userRepository.findById(userId)
+                    .map(User::getTotalProfit)
+                    .orElse(BigDecimal.ZERO);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("user", userInfoResult.getData());
+
+            // ✅ 改用 HashMap，避免 null 报错
+            Map<String, Object> profit = new HashMap<>();
+            profit.put("today", today == null ? BigDecimal.ZERO : today);
+            profit.put("yesterday", yesterday == null ? BigDecimal.ZERO : yesterday);
+            profit.put("total", total == null ? BigDecimal.ZERO : total);
+            result.put("profit", profit);
+
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("获取用户详情出错 userId = {}", userId, e);
+            return Result.failure("服务器异常：" + e.getMessage());
         }
-
-        // 获取盈利信息
-        BigDecimal today = userService.getTodayProfit(userId);
-        BigDecimal yesterday = userService.getYesterdayProfit(userId);
-        BigDecimal total = userRepository.findById(userId)
-                .map(User::getTotalProfit)
-                .orElse(BigDecimal.ZERO);
-
-        // 构建返回结果
-        Map<String, Object> result = new HashMap<>();
-        result.put("user", userInfoResult.getData());
-        result.put("profit", Map.of(
-                "today", today,
-                "yesterday", yesterday,
-                "total", total
-        ));
-
-        return Result.success(result);
     }
+
 
     @GetMapping("/withdraw/check")
     @Operation(summary = "检查用户是否允许提现（所有人）", description = "根据用户 canWithdraw 字段判断是否允许提现")
@@ -277,22 +295,6 @@ public class UserController {
     }
 
 
-    @GetMapping("/recharge/{userId}")
-    @Operation(summary = "根据用户ID获取充值记录", description = "返回指定用户的所有充值记录，仅包含充值金额和充值日期，按时间倒序")
-    public Result<List<Map<String, Object>>> getRechargeRecordsByUserId(@PathVariable Long userId) {
-        List<RechargeRecord> records = rechargeRecordRepository.findByUserIdOrderByRechargeTimeDesc(userId);
-
-        List<Map<String, Object>> resultList = records.stream().map(record -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("amount", record.getAmount());
-            map.put("rechargeDate", new SimpleDateFormat("yyyy-MM-dd").format(record.getRechargeTime()));
-            return map;
-        }).collect(Collectors.toList());
-
-        return Result.success(resultList);
-    }
-
-
     @GetMapping("/withdrawals/{userId}")
     @Operation(summary = "根据用户ID获取提现记录", description = "返回指定用户的所有提现记录，仅包含金额和提现日期，按时间倒序")
     public Result<List<Map<String, Object>>> getWithdrawalRecordsByUserId(@PathVariable Long userId) {
@@ -307,6 +309,23 @@ public class UserController {
 
         return Result.success(resultList);
     }
+
+    @GetMapping("/withdrawals/approved/{userId}")
+    @Operation(summary = "用户查询已通过的提现记录", description = "仅返回已审核通过的记录，按时间倒序")
+    public Result<List<Map<String, Object>>> getApprovedWithdrawalsByUser(@PathVariable Long userId) {
+        List<WithdrawalRecord> records = withdrawalRecordRepository.findByUserIdAndStatusOrderByWithdrawalTimeDesc(userId, "APPROVED");
+
+        List<Map<String, Object>> resultList = records.stream().map(record -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("amount", record.getAmount());
+            map.put("withdrawalDate", new SimpleDateFormat("yyyy-MM-dd").format(record.getWithdrawalTime()));
+            return map;
+        }).collect(Collectors.toList());
+
+        return Result.success(resultList);
+    }
+
+
 
     @PostMapping("/withdraw")
     @Operation(summary = "提交提现申请（用户）")
@@ -346,6 +365,75 @@ public class UserController {
             return Result.success("已拒绝提现：" + request.getReason());
         } catch (Exception e) {
             return Result.failure("操作失败：" + e.getMessage());
+        }
+    }
+
+    @GetMapping("/username/{username}")
+    @Operation(summary = "根据用户名查询用户")
+    public Result<User> getUserByUsername(@PathVariable String username) {
+        return userRepository.findByUsername(username)
+                .map(Result::success)
+                .orElse(Result.notFound("用户不存在"));
+    }
+
+    @GetMapping("/phone/{phone}")
+    @Operation(summary = "根据手机号查询用户")
+    public Result<User> getUserByPhone(@PathVariable String phone) {
+        return userRepository.findByPhone(phone)
+                .map(Result::success)
+                .orElse(Result.notFound("用户不存在"));
+    }
+
+
+    /**
+     * 更新用户指定字段
+     *
+     * @param userId   用户ID
+     * @param field    要更新的字段名称（如 "password", "superiorUsername", "tronWalletAddress" 等）
+     * @param newValue 新的字段值
+     * @return 更新后的用户信息或失败信息
+     */
+    @PutMapping("/update-field")
+    @Operation(summary = "更新指定用户的指定字段", description = "根据字段名更新用户的信息，如登录密码、上级用户名、Tron钱包地址等")
+    public Result<User> updateUserField(
+            @RequestParam Long userId,
+            @RequestParam String field,
+            @RequestParam String newValue
+    ) {
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("用户未找到"));
+
+            switch (field) {
+                case "password":
+                    user.setPassword(newValue);
+                    break;
+                case "superiorUsername":
+                    user.setSuperiorUsername(newValue);
+                    break;
+                case "tronWalletAddress":
+                    user.setTronWalletAddress(newValue);
+                    break;
+                case "bitCoinWalletAddress":
+                    user.setBitCoinWalletAddress(newValue);
+                    break;
+                case "ethWalletAddress":
+                    user.setEthWalletAddress(newValue);
+                    break;
+                case "coinWalletAddress":
+                    user.setCoinWalletAddress(newValue);
+                    break;
+                default:
+                    return Result.failure("不支持更新该字段");
+            }
+
+            // 保存更新后的用户信息
+            userRepository.save(user);
+
+            return Result.success(user);
+        } catch (Exception e) {
+            log.error("更新用户字段失败", e);
+            return Result.failure("更新失败：" + e.getMessage());
         }
     }
 

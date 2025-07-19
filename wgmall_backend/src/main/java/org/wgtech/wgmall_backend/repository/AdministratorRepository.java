@@ -46,4 +46,7 @@ public interface AdministratorRepository extends JpaRepository<Administrator, Lo
 
     Page<Administrator> findAllByRole(String role, Pageable pageable);
 
+    List<Administrator> findByUsernameContainingAndRole(String username, Administrator.Role role);
+
+
 }

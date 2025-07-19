@@ -18,6 +18,8 @@ public interface AdministratorService {
     void banAdministrator(long id);
     void unbanAdministrator(long id);
 
+    Administrator findByUsername(String username);
+
     Administrator createBoss(String username, String nickname, String password);
 
     List<Administrator> getAllBosses();
@@ -29,4 +31,8 @@ public interface AdministratorService {
     Result<Administrator> findSalesById(long id);
 
     Result<Administrator> loginAdmin(String username, String password);
+
+    void setBanStatus(long id, boolean isBanned);
+
+    List<Administrator> searchSalesByUsernameLike(String keyword);
 }

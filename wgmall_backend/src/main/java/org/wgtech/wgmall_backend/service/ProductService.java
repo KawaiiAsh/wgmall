@@ -1,5 +1,6 @@
 package org.wgtech.wgmall_backend.service;
 
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 import org.wgtech.wgmall_backend.entity.Product;
 
@@ -40,7 +41,7 @@ public interface ProductService {
      * @param max 最高价格
      * @return 商品列表
      */
-    List<Product> getProductsByPriceRange(BigDecimal min, BigDecimal max);
+    Page<Product> getProductsByPriceRange(BigDecimal min, BigDecimal max, int page, int size);
 
     /**
      * 根据商品ID删除商品（同时删除图片）
@@ -54,6 +55,9 @@ public interface ProductService {
 
     List<Product> getRandomProductsByType(Product.ProductType type);
 
-    List<Product> searchProductsByKeyword(String keyword);
+    Page<Product> searchProductsByKeyword(String keyword, int page, int size);
+
+    Page<Product> getAllProductsSortedByPrice(int page, int size);
+
 
 }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -89,16 +90,30 @@ public class ProductController {
      * @return 返回在指定价格区间内的商品列表
      */
     @GetMapping("/price-range")
-    @Operation(summary = "获取指定价格范围商品（身份“SALES，BOSS“的权限）", description = "查询商品价格在[min, max]范围内的商品列表")
-    public List<Product> getProductsByPriceRange(
+    @Operation(summary = "获取指定价格范围商品（身份“SALES，BOSS“的权限）", description = "查询商品价格在[min, max]范围内的商品列表（分页）")
+    public Result<List<Product>> getProductsByPriceRange(
             @Parameter(description = "最低价格", required = true)
             @RequestParam BigDecimal min,
 
             @Parameter(description = "最高价格", required = true)
-            @RequestParam BigDecimal max
+            @RequestParam BigDecimal max,
+
+            @Parameter(description = "页码，从0开始")
+            @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "每页数量")
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return productService.getProductsByPriceRange(min, max);
+        Page<Product> pagedProducts = productService.getProductsByPriceRange(min, max, page, size);
+        Result.Pagination pagination = new Result.Pagination(
+                pagedProducts.getNumber(),
+                pagedProducts.getTotalPages(),
+                pagedProducts.getTotalElements(),
+                pagedProducts.getSize()
+        );
+        return Result.success(pagedProducts.getContent(), pagination);
     }
+
 
     /**
      * 删除指定 ID 的商品
@@ -136,13 +151,43 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "关键词搜索商品（用户）", description = "根据名称或类型精准/模糊匹配，匹配不到就随机返回")
+    @Operation(summary = "关键词搜索商品（用户）", description = "支持分页")
     public Result<List<Product>> searchProducts(
-            @Parameter(description = "搜索关键词", required = true)
-            @RequestParam String keyword
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        List<Product> results = productService.searchProductsByKeyword(keyword);
-        return Result.success(results);
+        Page<Product> pagedResults = productService.searchProductsByKeyword(keyword, page, size);
+        Result.Pagination pagination = new Result.Pagination(
+                pagedResults.getNumber(),
+                pagedResults.getTotalPages(),
+                pagedResults.getTotalElements(),
+                pagedResults.getSize()
+        );
+        return Result.success(pagedResults.getContent(), pagination);
+    }
+
+    /**
+     * 获取所有商品，按价格从低到高排序，支持分页
+     *
+     * @param page 当前页码，从0开始
+     * @param size 每页数量
+     * @return 商品列表（分页）
+     */
+    @GetMapping("/all/sorted-by-price")
+    @Operation(summary = "分页获取所有商品（按价格升序）", description = "支持分页，按价格从低到高排序")
+    public Result<List<Product>> getAllProductsSortedByPrice(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<Product> pagedProducts = productService.getAllProductsSortedByPrice(page, size);
+        Result.Pagination pagination = new Result.Pagination(
+                pagedProducts.getNumber(),
+                pagedProducts.getTotalPages(),
+                pagedProducts.getTotalElements(),
+                pagedProducts.getSize()
+        );
+        return Result.success(pagedProducts.getContent(), pagination);
     }
 
 }

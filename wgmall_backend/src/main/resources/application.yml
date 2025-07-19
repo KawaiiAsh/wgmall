@@ -20,7 +20,9 @@ spring:
 logging:
   level:
     org.springframework.web: DEBUG   # 设置 Spring Web 包的日志级别为 DEBUG
+    org.wgtech.wgmall_backend.controller: INFO  # 👈 加这一行（改成你 controller 包的路径）
+
 
 # 服务器配置
 server:
-  port: ${PORT:8080}
+  port: 8080

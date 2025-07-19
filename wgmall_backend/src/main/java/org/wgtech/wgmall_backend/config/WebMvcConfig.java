@@ -24,6 +24,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**") // 访问 URL 中以 /uploads/ 开头的请求
-                .addResourceLocations("file:" + System.getProperty("user.dir") + "/uploads/"); // 映射到本地的 uploads 文件夹
+                .addResourceLocations("file:" + System.getProperty("user.dir") + "/wgmall_backend/uploads/");
     }
 }

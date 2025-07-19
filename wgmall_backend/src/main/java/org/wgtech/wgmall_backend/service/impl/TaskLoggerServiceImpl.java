@@ -12,6 +12,7 @@ import org.wgtech.wgmall_backend.repository.ProductRepository;
 import org.wgtech.wgmall_backend.repository.TaskLoggerRepository;
 import org.wgtech.wgmall_backend.repository.UserRepository;
 import org.wgtech.wgmall_backend.service.TaskLoggerService;
+import org.wgtech.wgmall_backend.utils.Result;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -74,8 +75,8 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
      * 发布一个“预留”类型的任务（通常是为特定用户准备的）
      */
     @Override
-    public boolean publishReservedTask(Long userId, String username, Long productId,
-                                       BigDecimal amount, Double rebate, String dispatcher, int triggerThreshold) {
+    public Result<String> publishReservedTask(Long userId, String username, Long productId,
+                                              BigDecimal amount, Double rebate, String dispatcher, int triggerThreshold) {
         log.info("🟡 开始发布预约任务：userId={}, username={}, productId={}, amount={}, rebate={}, dispatcher={}, triggerThreshold={}",
                 userId, username, productId, amount, rebate, dispatcher, triggerThreshold);
 
@@ -84,10 +85,24 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
             Product product = productRepository.findById(productId).orElse(null);
             if (product == null) {
                 log.warn("🔴 发布失败：未找到对应商品，productId={}", productId);
-                return false;
+                return Result.failure("商品不存在");
             }
 
-            // 2. 构建任务实体
+            // ✅ 2.1 校验是否已有相同触发条件的未完成任务
+            Optional<TaskLogger> existingTaskOpt = taskLoggerRepository
+                    .findFirstByUserIdAndDispatchTypeAndTriggerThresholdAndCompletedFalse(
+                            userId, TaskLogger.DispatchType.RESERVED, triggerThreshold);
+
+            if (existingTaskOpt.isPresent()) {
+                log.warn("🟠 已存在相同触发条件的未完成预约任务，userId={}, triggerThreshold={}", userId, triggerThreshold);
+                return Result.failure("您不能为同一个人连续派两次触发次数一样的单，请等待他先完成");
+            }
+
+            // 计算佣金与预期返还
+            BigDecimal commission = amount.multiply(BigDecimal.valueOf(rebate));
+            BigDecimal expectReturn = amount.add(commission);
+
+            // 构建任务实体
             TaskLogger task = TaskLogger.builder()
                     .userId(userId)
                     .username(username)
@@ -97,13 +112,14 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
                     .productImagePath(product.getImagePath())
                     .dispatchType(TaskLogger.DispatchType.RESERVED)
                     .rebate(rebate)
+                    .commission(commission)
+                    .expectReturn(expectReturn)
                     .dispatcher(dispatcher)
                     .createTime(LocalDateTime.now())
                     .triggerThreshold(triggerThreshold)
                     .completed(false)
                     .taken(false)
                     .build();
-
             // 3. 保存任务
             taskLoggerRepository.save(task);
             log.info("✅ 预约任务保存成功，taskId={}", task.getId());
@@ -112,7 +128,7 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
             User user = userRepository.findById(userId).orElse(null);
             if (user == null) {
                 log.warn("🔴 发布失败：未找到对应用户，userId={}", userId);
-                return false;
+                return Result.failure("用户不存在");
             }
 
             if (!user.isAppointmentStatus()) {
@@ -121,13 +137,14 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
                 log.info("🟢 用户预约状态已更新为 true，userId={}", userId);
             }
 
-            return true;
+            return Result.success("预约任务发布成功");
 
         } catch (Exception e) {
             log.error("🛑 发布预约任务过程中出现异常", e);
-            return false;
+            return Result.failure("服务器内部错误，请稍后再试");
         }
     }
+
 
 
 
@@ -190,5 +207,24 @@ public class TaskLoggerServiceImpl implements TaskLoggerService {
         return taskLoggerRepository.findByUserIdAndCompletedTrue(userId, pageable);
     }
 
+    @Override
+    public Page<TaskLogger> findAllTasks(Pageable pageable) {
+        return taskLoggerRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<TaskLogger> findByDispatchType(TaskLogger.DispatchType dispatchType, Pageable pageable) {
+        return taskLoggerRepository.findByDispatchType(dispatchType, pageable);
+    }
+
+    @Override
+    public Page<TaskLogger> findCompletedTasksByUsername(String username, Pageable pageable) {
+        return taskLoggerRepository.findByUsernameAndCompletedTrueOrderByCompleteTimeDesc(username, pageable);
+    }
+
+    @Override
+    public Page<TaskLogger> findTasksByUsername(String username, Pageable pageable) {
+        return taskLoggerRepository.findByUsernameOrderByCompleteTimeDesc(username, pageable);
+    }
 
 }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.wgtech.wgmall_backend.dto.AdminLoginRequest;
 import org.wgtech.wgmall_backend.dto.ChangePasswordRequest;
@@ -195,5 +196,36 @@ public class AuthController {
         // 可选：添加日志记录或行为分析处理
         return Result.success("客服已成功退出登录");
     }
+
+    @GetMapping("/info")
+    @Operation(summary = "获取当前登录用户信息", description = "解析 token，返回管理员信息")
+    public Result<?> getCurrentAdminInfo() {
+        // 从 Spring Security 的上下文中获取登录信息
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // 判断是否为管理员（Administrator 是你的实体类）
+        if (principal instanceof org.springframework.security.core.userdetails.User userDetails) {
+            String username = userDetails.getUsername(); // token 中的 sub 是 username
+            Administrator admin = administratorService.findByUsername(username);
+
+            if (admin == null) {
+                return Result.failure("未找到该管理员");
+            }
+
+            // 只返回需要的字段
+            Map<String, Object> data = new HashMap<>();
+            data.put("id", admin.getId());
+            data.put("username", admin.getUsername());
+            data.put("nickname", admin.getNickname());
+            data.put("invite_code", admin.getInviteCode());
+            data.put("role", admin.getRole());
+            data.put("banned", admin.isBanned());
+
+            return Result.success(data);
+        }
+
+        return Result.failure("未登录或权限异常");
+    }
+
 
 }

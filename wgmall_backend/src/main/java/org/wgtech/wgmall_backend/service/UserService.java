@@ -97,4 +97,9 @@ public interface UserService {
     void approveWithdrawal(Long withdrawalId);
 
     void rejectWithdrawal(Long withdrawalId, String reason);
+
+    void setUserBannedStatus(long userId, boolean banned);
+
+    void setCanWithdraw(Long userId, boolean canWithdraw);
+    User findByUsername(String username);
 }

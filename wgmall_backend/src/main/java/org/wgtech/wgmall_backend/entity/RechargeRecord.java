@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -20,13 +21,8 @@ public class RechargeRecord {
 
     private BigDecimal amount;
 
-    @Temporal(TemporalType.DATE)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date rechargeTime;
+    private LocalDateTime rechargeTime;  // 充值时间
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    private String username;  // 将 user 字段改为 username
 
-    private String remark; // 客服备注
 }

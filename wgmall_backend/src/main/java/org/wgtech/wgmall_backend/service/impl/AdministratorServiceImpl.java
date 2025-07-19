@@ -123,4 +123,24 @@ public class AdministratorServiceImpl implements AdministratorService {
         return Result.success(admin);
     }
 
+    @Override
+    public Administrator findByUsername(String username) {
+        return administratorRepository.findByUsername(username)
+                .orElse(null);
+    }
+
+    @Override
+    public void setBanStatus(long id, boolean isBanned) {
+        Administrator administrator = administratorRepository.findById(id).orElseThrow(() -> new RuntimeException("业务员不存在"));
+        administrator.setBanned(isBanned);
+        administratorRepository.save(administrator);
+    }
+
+    @Override
+    public List<Administrator> searchSalesByUsernameLike(String keyword) {
+        return administratorRepository.findByUsernameContainingAndRole(keyword, Administrator.Role.SALES);
+    }
+
+
+
 }

@@ -3,6 +3,7 @@ package org.wgtech.wgmall_backend.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.wgtech.wgmall_backend.entity.TaskLogger;
+import org.wgtech.wgmall_backend.utils.Result;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,8 +29,8 @@ public interface TaskLoggerService {
      * @param dispatcher 发布人
      * @return 是否成功
      */
-    boolean publishReservedTask(Long userId, String username, Long productId,
-                                BigDecimal amount, Double rebate, String dispatcher, int triggerThreshold);
+    Result<String> publishReservedTask(Long userId, String username, Long productId,
+                                       BigDecimal amount, Double rebate, String dispatcher, int triggerThreshold);
 
     /**
      * 获取该用户未领取的“预留任务”
@@ -55,4 +56,12 @@ public interface TaskLoggerService {
     Optional<TaskLogger> findPendingTaskByUserId(Long userId);
 
     Page<TaskLogger> findCompletedTasksByUserId(Long userId, Pageable pageable);
+
+    Page<TaskLogger> findAllTasks(Pageable pageable);
+    Page<TaskLogger> findCompletedTasksByUsername(String username, Pageable pageable);
+
+    Page<TaskLogger> findByDispatchType(TaskLogger.DispatchType dispatchType, Pageable pageable);
+    Page<TaskLogger> findTasksByUsername(String username, Pageable pageable);
+
+
 }

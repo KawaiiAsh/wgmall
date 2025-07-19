@@ -52,4 +52,47 @@ public class AddressServiceImpl implements AddressService {
 
         return savedAddress;
     }
+
+    @Override
+    public Address setOrUpdateAddress(Long userId, Address newAddress) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+
+        Address address = user.getAddress();
+
+        if (address == null) {
+            // 新建地址
+            address = addressRepository.save(newAddress);
+            user.setAddress(address);
+            userRepository.save(user);
+        } else {
+            // 更新已有地址
+            address.setProvince(newAddress.getProvince());
+            address.setCity(newAddress.getCity());
+            address.setDistrict(newAddress.getDistrict());
+            address.setStreet(newAddress.getStreet());
+            address.setDetail(newAddress.getDetail());
+            address.setCountry(newAddress.getCountry());
+            address.setReceiverName(newAddress.getReceiverName());
+            address.setReceiverPhone(newAddress.getReceiverPhone());
+            address = addressRepository.save(address);
+        }
+
+        return address;
+    }
+
+    @Override
+    public void deleteAddressByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+
+        Address address = user.getAddress();
+        if (address != null) {
+            user.setAddress(null);
+            userRepository.save(user);  // 解除绑定
+            addressRepository.deleteById(address.getId());  // 删除地址
+        }
+    }
+
+
 }

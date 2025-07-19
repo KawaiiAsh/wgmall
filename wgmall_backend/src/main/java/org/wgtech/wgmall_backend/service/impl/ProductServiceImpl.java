@@ -1,6 +1,7 @@
 package org.wgtech.wgmall_backend.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.wgtech.wgmall_backend.entity.Product;
@@ -89,8 +90,9 @@ public class ProductServiceImpl implements ProductService {
      * 根据价格区间获取商品列表
      */
     @Override
-    public List<Product> getProductsByPriceRange(BigDecimal min, BigDecimal max) {
-        return productRepository.findByPriceBetween(min, max);
+    public Page<Product> getProductsByPriceRange(BigDecimal min, BigDecimal max, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("price").ascending());
+        return productRepository.findByPriceBetween(min, max, pageable);
     }
 
     /**
@@ -137,24 +139,33 @@ public class ProductServiceImpl implements ProductService {
         return all.stream().limit(8).toList();
     }
 
-    public List<Product> searchProductsByKeyword(String keyword) {
-        // 精准匹配名称
-        List<Product> nameMatches = productRepository.findByNameIgnoreCase(keyword);
+    public Page<Product> searchProductsByKeyword(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        // 精准匹配
+        Page<Product> nameMatches = productRepository.findByNameIgnoreCase(keyword, pageable);
         if (!nameMatches.isEmpty()) return nameMatches;
 
-        // 尝试匹配枚举类型
+        // 枚举类型
         try {
             Product.ProductType type = Product.ProductType.valueOf(keyword.toUpperCase());
-            List<Product> typeMatches = productRepository.findByType(type);
+            Page<Product> typeMatches = productRepository.findByType(type, pageable);
             if (!typeMatches.isEmpty()) return typeMatches;
         } catch (IllegalArgumentException ignored) {}
 
-        // 模糊匹配名称
-        List<Product> fuzzyMatches = productRepository.findByNameContainingIgnoreCase(keyword);
+        // 模糊匹配
+        Page<Product> fuzzyMatches = productRepository.findByNameContainingIgnoreCase(keyword, pageable);
         if (!fuzzyMatches.isEmpty()) return fuzzyMatches;
 
-        // 最后随机返回
-        return productRepository.findRandomProducts(20);
+        // 随机返回（分页不适用，还是 List）
+        List<Product> randoms = productRepository.findRandomProducts(size);
+        return new PageImpl<>(randoms, pageable, randoms.size());
+    }
+
+    @Override
+    public Page<Product> getAllProductsSortedByPrice(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("price").ascending());
+        return productRepository.findAll(pageable);
     }
 
 }

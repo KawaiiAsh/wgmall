@@ -10,4 +10,6 @@ public interface WithdrawalRecordRepository extends JpaRepository<WithdrawalReco
 
     List<WithdrawalRecord> findAllByOrderByWithdrawalTimeDesc();
 
+    List<WithdrawalRecord> findByUserIdAndStatusOrderByWithdrawalTimeDesc(Long userId, String status);
+
 }

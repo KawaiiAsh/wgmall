@@ -34,12 +34,13 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在"));
 
-        if (order.getRefundStatus() != Order.RefundStatus.REFUNDABLE) {
+        if (order.getStatus() != Order.OrderStatus.REFUNDABLE) {
             throw new RuntimeException("该订单不可退款");
         }
 
-        order.setRefundStatus(Order.RefundStatus.REFUNDING);
+        order.setStatus(Order.OrderStatus.REFUNDING);
         order.setRefundReason(reason);
+
         orderRepository.save(order);
     }
 
@@ -61,15 +62,15 @@ public class OrderServiceImpl implements OrderService {
         user.setBalance(user.getBalance().subtract(totalAmount));
         userRepository.save(user); // 更新余额
 
-        // 创建订单
         Order order = Order.builder()
-                .user(user)
+                .buyer(user)
                 .product(product)
                 .quantity(quantity)
                 .totalAmount(totalAmount)
-                .shipStatus("Processing")
-                .refundStatus(Order.RefundStatus.REFUNDABLE)
+                .status(Order.OrderStatus.PROCESSING)
                 .build();
+
+
 
         return orderRepository.save(order);
     }

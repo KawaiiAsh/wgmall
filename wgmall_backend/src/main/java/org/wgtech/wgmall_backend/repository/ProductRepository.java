@@ -27,7 +27,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * @param max 最高价格
      * @return 商品列表
      */
-    List<Product> findByPriceBetween(BigDecimal min, BigDecimal max);
+    Page<Product> findByPriceBetween(BigDecimal min, BigDecimal max, Pageable pageable);
 
     List<Product> findByType(Product.ProductType type);
 
@@ -39,16 +39,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query(value = "SELECT * FROM products ORDER BY RAND() LIMIT 8", nativeQuery = true)
     List<Product> findRandomAll();
 
-    // 1. 精准匹配名称
-    List<Product> findByNameIgnoreCase(String name);
-
-    // 3. 模糊匹配名称
-    List<Product> findByNameContainingIgnoreCase(String name);
 
     // 4. 随机返回
     @Query(value = "SELECT * FROM products ORDER BY RAND() LIMIT ?1", nativeQuery = true)
     List<Product> findRandomProducts(int limit);
 
     Page<Product> findByTypeIn(List<Product.ProductType> types, Pageable pageable);
+
+    Page<Product> findByNameIgnoreCase(String name, Pageable pageable);
+    Page<Product> findByType(Product.ProductType type, Pageable pageable);
+    Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
 }
